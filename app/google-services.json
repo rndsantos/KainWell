@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "322937077293",
+    "project_id": "kainwell-bd809",
+    "storage_bucket": "kainwell-bd809.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:322937077293:android:71a14dfd414a83e136c2a4",
+        "android_client_info": {
+          "package_name": "com.example.kainwell"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhzHT4vo3j1iZo0xAemTU1bN3fuEzNCdk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
