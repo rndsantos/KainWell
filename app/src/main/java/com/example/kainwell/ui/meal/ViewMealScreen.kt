@@ -58,6 +58,7 @@ fun ViewMealScreen(
             selectedFoodItems = state.selectedFoodItems,
             onAddSelectedFoodItem = viewModel::onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = viewModel::onRemoveSelectedFoodItem,
+            onOptimizeMeal = viewModel::onOptimizeMeal,
             onBack = onBack
         )
 
@@ -70,6 +71,7 @@ fun ViewMealScreenReady(
     selectedFoodItems: Map<Food, Int>,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
+    onOptimizeMeal: () -> Unit,
     onBack: () -> Unit,
 ) {
     Scaffold(
@@ -90,7 +92,9 @@ fun ViewMealScreenReady(
             )
         },
         bottomBar = {
-            ViewMealBottomAppBar()
+            ViewMealBottomAppBar(
+                onOptimizeMeal = onOptimizeMeal
+            )
         },
     ) { innerPadding ->
         ViewMealContent(
@@ -103,7 +107,9 @@ fun ViewMealScreenReady(
 }
 
 @Composable
-fun ViewMealBottomAppBar() {
+fun ViewMealBottomAppBar(
+    onOptimizeMeal: () -> Unit,
+) {
     Surface(
         shape = MaterialTheme.shapes.large,
         shadowElevation = 5.dp,
@@ -111,9 +117,11 @@ fun ViewMealBottomAppBar() {
             .height(90.dp)
     ) {
         KainWellButton(
-            onClick = { /*TODO*/ }, backgroundGradient = listOf(
-                Color(0xFFD4145A),
-                Color(0xFFFBB03B)
+            onClick = onOptimizeMeal,
+            containerColor = MaterialTheme.colorScheme.inverseSurface,
+            backgroundGradient = listOf(
+                MaterialTheme.colorScheme.primary,
+                MaterialTheme.colorScheme.tertiary
             ),
             shape = MaterialTheme.shapes.small,
             modifier = Modifier.fillMaxWidth()

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.data.food.FoodRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,7 +21,7 @@ class FoodDetailViewModel @Inject constructor(
     init {
         val foodId: String = checkNotNull(savedStateHandle["foodId"])
         val foodCategory: String = checkNotNull(savedStateHandle["foodCategory"])
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             food.value = foodRepository.getFood(foodId, foodCategory) ?: Food()
         }
     }

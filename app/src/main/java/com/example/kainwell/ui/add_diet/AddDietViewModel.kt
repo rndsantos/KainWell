@@ -2,8 +2,11 @@ package com.example.kainwell.ui.add_diet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.kainwell.Nutrient
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.data.food.FoodRepository
+import com.example.kainwell.data.nutrient.NutritionalIntakeRepository
+import com.example.kainwell.domain.OptimizeSelectedFoodItemsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,23 +16,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-sealed interface AddDietUiState {
-    data object Loading : AddDietUiState
-
-    data class Error(
-        val errorMessage: String,
-        val errorType: Throwable? = null,
-    ) : AddDietUiState
-
-    data class Ready(
-        val foodItems: Map<String, List<Food>>,
-        val selectedFoodItems: Map<Food, Int> = mapOf(),
-    ) : AddDietUiState
-}
 
 @HiltViewModel
 class AddDietViewModel @Inject constructor(
     foodRepository: FoodRepository,
+    nutritionalIntakeRepository: NutritionalIntakeRepository,
+    private val optimizeSelectedFoodItemsUseCase: OptimizeSelectedFoodItemsUseCase,
 ) : ViewModel() {
     private val _query = MutableStateFlow("")
     private val _selectedFoodItems = MutableStateFlow<Map<Food, Int>>(emptyMap())
@@ -39,6 +31,38 @@ class AddDietViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            nutritionalIntakeRepository.setMinimumNutritionalIntake(
+                Nutrient.newBuilder().apply {
+                    calories = 2000f
+                    cholesterol = 0f
+                    fat = 0f
+                    sodium = 0f
+                    carbohydrates = 0f
+                    fiber = 25f
+                    protein = 50f
+                    vitA = 5000f
+                    vitC = 50f
+                    calcium = 800f
+                    iron = 10f
+                }.build()
+            )
+
+            nutritionalIntakeRepository.setMaximumNutritionalIntake(
+                Nutrient.newBuilder().apply {
+                    calories = 2250f
+                    cholesterol = 300f
+                    fat = 65f
+                    sodium = 2400f
+                    carbohydrates = 300f
+                    fiber = 100f
+                    protein = 100f
+                    vitA = 50000f
+                    vitC = 20000f
+                    calcium = 1600f
+                    iron = 30f
+                }.build()
+            )
+
             combine(
                 foodRepository.getCategorizedFoodItems(),
                 _query,
@@ -80,5 +104,35 @@ class AddDietViewModel @Inject constructor(
 
     fun onSelectedFoodItemsChange(selectedFoodItems: Map<Food, Int>) {
         _selectedFoodItems.value = selectedFoodItems
+    }
+
+    fun onResetSelectedFoodItems() {
+        _selectedFoodItems.value = emptyMap()
+    }
+
+    fun onOptimizeMeal() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val selectedFoodItems = _selectedFoodItems.value.map {
+                val food = Food(
+                    name = it.key.name,
+                    calories = it.key.calories * it.value,
+                    cholesterol = it.key.cholesterol * it.value,
+                    fat = it.key.fat * it.value,
+                    sodium = it.key.sodium * it.value,
+                    carbohydrates = it.key.carbohydrates * it.value,
+                    fiber = it.key.fiber * it.value,
+                    protein = it.key.protein * it.value,
+                    vitA = it.key.vitA * it.value,
+                    vitC = it.key.vitC * it.value,
+                    calcium = it.key.calcium * it.value,
+                    iron = it.key.iron * it.value,
+                    price = it.key.price * it.value
+                )
+
+                food
+            }
+
+            optimizeSelectedFoodItemsUseCase(selectedFoodItems)
+        }
     }
 }

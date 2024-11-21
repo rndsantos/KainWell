@@ -2,6 +2,7 @@
 agp = "8.5.2"
 coilCompose = "3.0.2"
 constraintlayoutCompose = "1.1.0"
+datastore = "1.1.1"
 firebaseBom = "33.5.1"
 hiltAndroidCompiler = "2.51.1"
 kotlin = "2.0.20"
@@ -13,6 +14,7 @@ kotlinxSerializationJson = "1.7.3"
 lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.3"
 composeBom = "2024.10.01"
+protobufJavalite = "3.25.1"
 uiTextGoogleFonts = "1.7.5"
 navigationRuntimeKtx = "2.8.3"
 navigationCompose = "2.8.3"
@@ -24,10 +26,16 @@ hiltNavigationCompose = "1.2.0"
 firebaseFirestore = "25.1.1"
 constraintlayout = "2.2.0"
 datastorePreferences = "1.1.1"
+komaCoreEjml = "0.12"
+multikCore = "0.2.3"
+multikDefault = "0.2.3"
+multikJvm = "0.2.2"
+multikCoreJvm = "0.2.3"
 
 [libraries]
 androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
@@ -57,6 +65,12 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
+koma-core-ejml = { group = "org.jetbrains.kotlinx", name = "koma-core-ejml", version.ref = "komaCoreEjml" }
+multik-core = { group = "org.jetbrains.kotlinx", name = "multik-core", version.ref = "multikCore" }
+multik-default = { group = "org.jetbrains.kotlinx", name = "multik-default", version.ref = "multikDefault" }
+multik-jvm = { group = "org.jetbrains.kotlinx", name = "multik-jvm", version.ref = "multikJvm" }
+multik-core-jvm = { group = "org.jetbrains.kotlinx", name = "multik-core-jvm", version.ref = "multikCoreJvm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

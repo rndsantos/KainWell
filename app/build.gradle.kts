@@ -2,10 +2,13 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
-    kotlin("plugin.serialization") version "2.0.20"
     alias(libs.plugins.google.gms.google.services)
+
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    id("com.google.protobuf") version "0.9.4"
+
+    kotlin("plugin.serialization") version "2.0.20"
 }
 
 android {
@@ -55,6 +58,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.protobuf.javalite)
+    implementation(libs.androidx.datastore)
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
@@ -91,4 +96,21 @@ dependencies {
 
 kapt {
     correctErrorTypes = true
+}
+
+protobuf {
+    protoc {
+        // find latest version number here:
+        // https://mvnrepository.com/artifact/com.google.protobuf/protoc
+        artifact = "com.google.protobuf:protoc:3.25.1"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins {
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }

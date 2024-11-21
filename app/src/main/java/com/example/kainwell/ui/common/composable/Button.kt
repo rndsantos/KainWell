@@ -45,13 +45,13 @@ fun KainWellButton(
 ) {
     Surface(
         shape = shape,
-        color = containerColor,
+        color = if (backgroundGradient.isEmpty()) containerColor else Color.Transparent,
         contentColor = if (enabled) contentColor else disabledContentColor,
         border = border,
         modifier = modifier
             .clip(shape)
             .then(
-                if (backgroundGradient.isNotEmpty() && disabledBackgroundGradient.isNotEmpty()) {
+                if (backgroundGradient.isNotEmpty()) {
                     Modifier.background(
                         brush = Brush.horizontalGradient(
                             colors = if (enabled) backgroundGradient else disabledBackgroundGradient

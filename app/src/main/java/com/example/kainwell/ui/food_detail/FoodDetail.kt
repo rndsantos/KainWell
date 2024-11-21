@@ -2,8 +2,6 @@
 
 package com.example.kainwell.ui.food_detail
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -13,11 +11,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -30,12 +28,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.kainwell.data.food.Food
 import com.example.kainwell.ui.Dimensions.ExtraLargePadding
 import com.example.kainwell.ui.Dimensions.LargePadding
 import com.example.kainwell.ui.Dimensions.MediumPadding
@@ -46,7 +44,6 @@ import com.example.kainwell.ui.common.composable.FoodImage
 import com.example.kainwell.ui.common.composable.KainWellButton
 import com.example.kainwell.ui.meal.FoodItemCounter
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun FoodDetail(
     onBack: () -> Unit,
@@ -55,8 +52,28 @@ fun FoodDetail(
 ) {
     val food by viewModel.food
     val addDietUiState by addDietViewModel.uiState.collectAsStateWithLifecycle()
+
+    when (val state = addDietUiState) {
+        is AddDietUiState.Ready -> FoodDetailContent(
+            food = food,
+            selectedFoods = state.selectedFoodItems,
+            onSelectedFoodItemsChange = addDietViewModel::onSelectedFoodItemsChange,
+            onBack = onBack
+        )
+
+        else -> throw IllegalStateException("UI state found is not preloaded yet.")
+    }
+}
+
+@Composable
+fun FoodDetailContent(
+    food: Food,
+    selectedFoods: Map<Food, Int>,
+    onSelectedFoodItemsChange: (Map<Food, Int>) -> Unit,
+    onBack: () -> Unit,
+) {
     var selectedFoodItems by remember {
-        mutableStateOf((addDietUiState as AddDietUiState.Ready).selectedFoodItems)
+        mutableStateOf(selectedFoods)
     }
 
     Scaffold(
@@ -64,55 +81,71 @@ fun FoodDetail(
             .fillMaxHeight(0.8f)
             .clip(MaterialTheme.shapes.small),
         bottomBar = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(SmallPadding),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .shadow(8.dp)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .fillMaxWidth()
-                    .padding(MediumPadding)
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 8.dp,
+                shape = MaterialTheme.shapes.small,
             ) {
-                FoodItemCounter(
-                    quantity = selectedFoodItems.getOrDefault(
-                        food,
-                        0
-                    ),
-                    onAdd = {
-                        selectedFoodItems = selectedFoodItems.toMutableMap().apply {
-                            this[food] = this.getOrDefault(food, 0) + 1
-                        }
-                    },
-                    onRemove = {
-                        selectedFoodItems = selectedFoodItems.toMutableMap().apply {
-                            this[food] = this.getOrDefault(food, 0) - 1
-                        }
-                    })
-                KainWellButton(
-                    onClick = {
-                        addDietViewModel.onSelectedFoodItemsChange(
-                            selectedFoodItems
-                        )
-                        onBack()
-                    },
-                    contentPadding = PaddingValues(
-                        horizontal = ExtraLargePadding,
-                        vertical = SmallPadding
-                    ),
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(SmallPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(MediumPadding)
                 ) {
-                    Text(text = "Add to meal", style = MaterialTheme.typography.bodySmall)
+                    FoodItemCounter(
+                        quantity = selectedFoodItems.getOrDefault(
+                            food,
+                            0
+                        ),
+                        onAdd = {
+                            selectedFoodItems = selectedFoodItems.toMutableMap().apply {
+                                this[food] = this.getOrDefault(food, 0) + 1
+                            }
+                        },
+                        onRemove = {
+                            selectedFoodItems = selectedFoodItems.toMutableMap().apply {
+                                if (this[food] == 1) {
+                                    this.remove(food)
+
+                                    onSelectedFoodItemsChange(this)
+                                    onBack()
+
+                                    return@apply
+                                }
+
+                                this[food] = this.getOrDefault(food, 0) - 1
+                            }
+                        })
+                    KainWellButton(
+                        onClick = {
+                            onSelectedFoodItemsChange(
+                                selectedFoodItems
+                            )
+                            onBack()
+                        },
+                        containerColor = MaterialTheme.colorScheme.inverseSurface,
+                        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        contentPadding = PaddingValues(
+                            horizontal = ExtraLargePadding,
+                            vertical = SmallPadding
+                        ),
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Add to meal", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }
-    ) {
+    ) { innerPadding ->
         Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
+            modifier = Modifier.padding(innerPadding)
         ) {
-            Column {
+            Column(
+                Modifier
+                    .verticalScroll(rememberScrollState())
+            ) {
                 FoodImage(
                     imageUrl = food.img,
                     contentDescription = food.name,
@@ -146,10 +179,10 @@ fun FoodDetail(
                     Spacer(Modifier.height(SmallPadding))
                     FlowRow(
                         maxItemsInEachRow = 4,
-                        horizontalArrangement = Arrangement.spacedBy(SmallPadding),
-                        verticalArrangement = Arrangement.spacedBy(SmallPadding),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier
-                            .padding(SmallPadding)
+                            .padding(MediumPadding)
                             .fillMaxWidth()
                     ) {
                         NutrientCard(
@@ -214,14 +247,17 @@ fun NutrientCard(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.primaryContainer,
+        shadowElevation = 1.dp,
+        shape = MaterialTheme.shapes.extraLarge,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         modifier = modifier
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier.padding(MediumPadding)
+            modifier = Modifier
+                .padding(MediumPadding)
+
         ) {
             Text(
                 text = name,

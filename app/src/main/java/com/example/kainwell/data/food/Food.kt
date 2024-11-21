@@ -22,4 +22,20 @@ data class Food(
     val iron: Float = 0f,
     val category: String = "",
     val img: String = "",
-)
+) {
+    fun nutrientsToList(): List<Float> {
+        return listOf(
+            calories,
+            cholesterol,
+            fat,
+            sodium,
+            carbohydrates,
+            fiber,
+            protein,
+            vitA,
+            vitC,
+            calcium,
+            iron
+        )
+    }
+}

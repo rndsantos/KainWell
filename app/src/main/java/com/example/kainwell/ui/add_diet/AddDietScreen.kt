@@ -22,16 +22,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -39,22 +42,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,7 +66,9 @@ import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.common.composable.ErrorScreen
 import com.example.kainwell.ui.common.composable.FoodItemCard
 import com.example.kainwell.ui.common.composable.LoadingScreen
-import java.util.Locale
+import com.example.kainwell.ui.common.ext.bottomBorder
+import com.example.kainwell.ui.common.ext.titlecase
+import kotlinx.coroutines.launch
 
 @Composable
 fun AddDietScreen(
@@ -84,6 +86,7 @@ fun AddDietScreen(
             onFoodClick = onFoodClick,
             onAddSelectedFoodItem = viewModel::onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = viewModel::onRemoveSelectedFoodItem,
+            onResetSelectedFoodItems = viewModel::onResetSelectedFoodItems,
             navigateToViewMeal = navigateToViewMeal,
         )
     }
@@ -97,13 +100,16 @@ fun AddDietScreenReady(
     onFoodClick: (String, String) -> Unit,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
+    onResetSelectedFoodItems: () -> Unit,
     navigateToViewMeal: () -> Unit,
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val lazyListState = rememberLazyListState()
     var query by remember {
         mutableStateOf(TextFieldValue(""))
     }
     var selectedCategory by remember {
-        mutableStateOf("")
+        mutableIntStateOf(0)
     }
 
     Scaffold(
@@ -121,8 +127,13 @@ fun AddDietScreenReady(
                 )
                 CategoryList(
                     categories = foodItems.keys.toList(),
-                    selectedCategory = selectedCategory,
-                    onCategorySelected = { selectedCategory = it },
+                    selectedCategoryIndex = selectedCategory,
+                    onCategorySelected = {
+                        selectedCategory = it
+                        coroutineScope.launch {
+                            lazyListState.animateScrollToItem(selectedCategory)
+                        }
+                    },
                     modifier = Modifier.padding(
                         start = SmallPadding,
                         end = SmallPadding,
@@ -138,35 +149,32 @@ fun AddDietScreenReady(
 
             AddDietBottomAppBar(
                 selectedFoodItems = selectedFoodItems,
+                onResetMeal = onResetSelectedFoodItems,
                 onNavigateToViewMeal = {
                     navigateToViewMeal()
                 }
             )
-        }
+        },
     ) { innerPadding ->
-        Column(
+        LazyColumn(
+            state = lazyListState,
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
+                .padding(horizontal = MediumPadding)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = MediumPadding)
-                    .verticalScroll(
-                        rememberScrollState()
-                    )
-            ) {
-                foodItems.entries.map { foodCategory ->
-                    FoodItemCategory(
-                        category = foodCategory.key,
-                        foodItems = foodCategory.value,
-                        selectedFoodItems = selectedFoodItems,
-                        onFoodClick = onFoodClick,
-                        onAddSelectedFoodItem = onAddSelectedFoodItem,
-                        onRemoveSelectedFoodItem = onRemoveSelectedFoodItem,
-                        modifier = Modifier.padding(top = MediumPadding)
-                    )
-                }
+            items(
+                items = foodItems.entries.toList(),
+                key = { it.key }
+            ) { foodCategory ->
+                FoodItemCategory(
+                    category = foodCategory.key,
+                    foodItems = foodCategory.value,
+                    selectedFoodItems = selectedFoodItems,
+                    onFoodClick = onFoodClick,
+                    onAddSelectedFoodItem = onAddSelectedFoodItem,
+                    onRemoveSelectedFoodItem = onRemoveSelectedFoodItem,
+                    modifier = Modifier.padding(top = MediumPadding)
+                )
             }
         }
     }
@@ -176,6 +184,7 @@ fun AddDietScreenReady(
 @Composable
 private fun AddDietBottomAppBar(
     selectedFoodItems: Map<Food, Int>,
+    onResetMeal: () -> Unit,
     onNavigateToViewMeal: () -> Unit,
 ) {
     Surface(
@@ -187,7 +196,8 @@ private fun AddDietBottomAppBar(
     ) {
         ViewMealButton(
             selectedFoodItems = selectedFoodItems,
-            onNavigateToViewMeal = onNavigateToViewMeal
+            onResetMeal = onResetMeal,
+            onNavigateToViewMeal = onNavigateToViewMeal,
         )
     }
 }
@@ -195,6 +205,7 @@ private fun AddDietBottomAppBar(
 @Composable
 private fun ViewMealButton(
     selectedFoodItems: Map<Food, Int>,
+    onResetMeal: () -> Unit,
     onNavigateToViewMeal: () -> Unit,
 ) {
     val interactionSource = remember {
@@ -202,8 +213,8 @@ private fun ViewMealButton(
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
+        color = MaterialTheme.colorScheme.inverseSurface,
+        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
         shape = MaterialTheme.shapes.small,
         modifier = Modifier
             .padding(
@@ -268,6 +279,15 @@ private fun ViewMealButton(
                     )
                 }
             }
+            IconButton(
+                onClick = onResetMeal, modifier = Modifier
+                    .padding(12.dp)
+                    .size(25.dp)
+                    .aspectRatio(1f)
+                    .align(Alignment.BottomEnd)
+            ) {
+                Icon(imageVector = Icons.Outlined.Clear, contentDescription = "clear meal")
+            }
         }
     }
 }
@@ -275,19 +295,19 @@ private fun ViewMealButton(
 @Composable
 fun CategoryList(
     categories: List<String>,
-    selectedCategory: String,
-    onCategorySelected: (String) -> Unit,
+    selectedCategoryIndex: Int,
+    onCategorySelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(LargePadding),
         modifier = modifier
     ) {
-        items(categories) { category ->
+        itemsIndexed(categories) { index, category ->
             Box(
                 modifier = Modifier
                     .clickable {
-                        onCategorySelected(category)
+                        onCategorySelected(index)
                     }
                     .padding(SmallPadding)
             ) {
@@ -297,7 +317,7 @@ fun CategoryList(
                         fontWeight = FontWeight.Bold
                     ),
                     modifier = Modifier.then(
-                        if (category == selectedCategory) Modifier.bottomBorder(
+                        if (index == selectedCategoryIndex) Modifier.bottomBorder(
                             2.dp,
                             MaterialTheme.colorScheme.inverseSurface
                         ) else Modifier
@@ -351,28 +371,6 @@ fun SearchBar(
     }
 }
 
-fun String.titlecase(): String {
-    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
-}
-
-fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
-    factory = {
-        val density = LocalDensity.current
-        val strokeWidthPx = density.run { strokeWidth.toPx() }
-
-        Modifier.drawBehind {
-            val width = size.width
-            val height = size.height + SmallPadding.toPx() - strokeWidthPx / 2
-
-            drawLine(
-                color = color,
-                start = Offset(x = 0f, y = height),
-                end = Offset(x = width, y = height),
-                strokeWidth = strokeWidthPx
-            )
-        }
-    }
-)
 
 @Composable
 private fun SearchHint() {

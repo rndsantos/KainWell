@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_package = "com.example.kainwell";
+option java_multiple_files = true;
+
+message Nutrient {
+    float calories = 1;
+    float cholesterol = 2;
+    float fat = 3;
+    float sodium = 4;
+    float carbohydrates = 5;
+    float fiber = 6;
+    float protein = 7;
+    float vit_a = 8;
+    float vit_c = 9;
+    float calcium = 10;
+    float iron = 11;
+}
+
+message NutritionalIntakes {
+    Nutrient minimum = 1;
+    Nutrient maximum = 2;
+}
