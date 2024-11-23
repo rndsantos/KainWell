@@ -1,17 +1,24 @@
 package com.example.kainwell.ui.common.composable
 
-import androidx.compose.foundation.background
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -20,26 +27,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.example.kainwell.R
+import com.example.kainwell.data.food.Food
 import com.example.kainwell.ui.Dimensions.SmallPadding
-import com.example.kainwell.ui.meal.FoodItemCounter
 import com.example.kainwell.ui.utils.isDarkMode
 
 @Composable
 fun FoodItemCard(
-    name: String,
-    quantity: Int,
-    price: Float,
-    imageUrl: String,
+    food: Food,
+    selected: Boolean,
     onClick: () -> Unit,
     onAddFoodItem: () -> Unit,
     onRemoveFoodItem: () -> Unit,
@@ -59,15 +65,24 @@ fun FoodItemCard(
         ) {
             Box {
                 FoodImage(
-                    imageUrl = imageUrl,
-                    contentDescription = name,
+                    imageUrl = food.img,
+                    contentDescription = food.img,
                     modifier = Modifier
                         .aspectRatio(1f)
                 )
                 Box(
                     Modifier.align(Alignment.BottomEnd)
                 ) {
-                    if (quantity == 0)
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = !selected, enter = expandIn(
+                            expandFrom = Alignment.Center
+                        ) + fadeIn(
+                            initialAlpha = 0.3f
+                        ),
+                        exit = shrinkOut(
+                            shrinkTowards = Alignment.Center
+                        ) + fadeOut()
+                    ) {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
                             shadowElevation = 4.dp,
@@ -87,37 +102,126 @@ fun FoodItemCard(
                                 )
                             }
                         }
-                    else
-                        FoodItemCounter(
-                            quantity = quantity,
-                            onAdd = onAddFoodItem,
-                            onRemove = onRemoveFoodItem,
+                    }
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = selected,
+                        enter = expandIn(
+                            expandFrom = Alignment.Center
+                        ) + fadeIn(
+                            initialAlpha = 0.3f
+                        ),
+                        exit = shrinkOut(
+                            shrinkTowards = Alignment.Center
+                        ) + fadeOut()
+                    ) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            shadowElevation = 4.dp,
+                            shape = CircleShape,
                             modifier = Modifier
+                                .size(45.dp)
                                 .padding(SmallPadding)
-                                .shadow(
-                                    elevation = 4.dp,
-                                    shape = MaterialTheme.shapes.extraLarge
+                        ) {
+                            IconButton(
+                                onClick = onRemoveFoodItem,
+                                modifier = Modifier.padding(2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = "add food to meal",
+                                    modifier = Modifier.fillMaxSize()
                                 )
-                                .clip(MaterialTheme.shapes.extraLarge)
-                                .background(MaterialTheme.colorScheme.surface)
-                        )
+                            }
+                        }
+                    }
                 }
 
             }
-            Column(
-                modifier = Modifier.padding(SmallPadding)
+            Box(
+                modifier = Modifier
+                    .padding(10.dp)
+                    .fillMaxWidth()
             ) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(text = "$$price", style = MaterialTheme.typography.labelSmall)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(
+                        text = food.name,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth(0.7f)
+                    )
+                    BadgedNutrientValue(value = "${food.calories} kcal") {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_calories),
+                            contentDescription = "protein",
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(SmallPadding),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BadgedNutrientValue(value = "${food.protein}g") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_protein),
+                                contentDescription = "protein",
+                                tint = Color.Red,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                        BadgedNutrientValue(value = "${food.carbohydrates}g") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_carbs),
+                                contentDescription = "carbs",
+                                tint = Color.Green,
+                                modifier = Modifier.size(14.dp)
+
+                            )
+                        }
+                        BadgedNutrientValue(value = "${food.fat}g") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_fats),
+                                contentDescription = "fats",
+                                tint = Color.Yellow,
+                                modifier = Modifier.size(14.dp)
+
+                            )
+                        }
+                    }
+                }
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                ) {
+                    Text(text = "$${food.price}", style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
+    }
+}
+
+@Composable
+fun BadgedNutrientValue(
+    value: String,
+    modifier: Modifier = Modifier,
+    icon: @Composable () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier
+    ) {
+        icon()
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }
 
@@ -128,6 +232,7 @@ fun FoodImage(
     modifier: Modifier = Modifier,
 ) {
     Surface(
+
         modifier = modifier
     ) {
         AsyncImage(
@@ -140,5 +245,11 @@ fun FoodImage(
             contentScale = ContentScale.Crop,
         )
     }
+}
+
+@Composable
+fun PrimaryNutrientCard(
+) {
+
 }
 

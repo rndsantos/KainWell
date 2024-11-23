@@ -2,12 +2,9 @@
 
 package com.example.kainwell.ui.meal
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,14 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.add_diet.AddDietUiState
@@ -68,7 +60,7 @@ fun ViewMealScreen(
 
 @Composable
 fun ViewMealScreenReady(
-    selectedFoodItems: Map<Food, Int>,
+    selectedFoodItems: Set<Food>,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
     onOptimizeMeal: () -> Unit,
@@ -98,7 +90,7 @@ fun ViewMealScreenReady(
         },
     ) { innerPadding ->
         ViewMealContent(
-            selectedFoodItems = selectedFoodItems,
+            selectedFoodItems = selectedFoodItems.toList(),
             onAddSelectedFoodItem = onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = onRemoveSelectedFoodItem,
             innerPadding = innerPadding
@@ -138,7 +130,7 @@ fun ViewMealBottomAppBar(
 
 @Composable
 fun ViewMealContent(
-    selectedFoodItems: Map<Food, Int>,
+    selectedFoodItems: List<Food>,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
     innerPadding: PaddingValues,
@@ -147,26 +139,14 @@ fun ViewMealContent(
         contentPadding = innerPadding,
         modifier = Modifier.fillMaxSize()
     ) {
-        items(selectedFoodItems.entries.toList()) { foodQuantityPair ->
+        items(selectedFoodItems) { foodItem ->
             ListItem(
                 headlineContent = {
                     Text(
-                        foodQuantityPair.key.name,
+                        foodItem.name,
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold
                         )
-                    )
-                },
-                supportingContent = {
-                    FoodItemCounter(
-                        quantity = foodQuantityPair.value,
-                        onAdd = { onAddSelectedFoodItem(foodQuantityPair.key) },
-                        onRemove = { onRemoveSelectedFoodItem(foodQuantityPair.key) },
-                        modifier = Modifier
-                            .padding(vertical = SmallPadding)
-                            .clip(MaterialTheme.shapes.extraLarge)
-                            .background(MaterialTheme.colorScheme.surfaceContainer)
-
                     )
                 },
                 leadingContent = {
@@ -175,16 +155,20 @@ fun ViewMealContent(
                         modifier = Modifier.size(50.dp)
                     ) {
                         FoodImage(
-                            imageUrl = foodQuantityPair.key.img,
-                            contentDescription = foodQuantityPair.key.name
+                            imageUrl = foodItem.img,
+                            contentDescription = foodItem.name
                         )
                     }
                 },
                 trailingContent = {
-                    Text(
-                        text = "$${foodQuantityPair.key.price}",
-                        style = MaterialTheme.typography.titleSmall
-                    )
+                    IconButton(onClick = {
+                        onRemoveSelectedFoodItem(foodItem)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "close"
+                        )
+                    }
                 }
             )
         }
@@ -192,55 +176,82 @@ fun ViewMealContent(
 }
 
 @Composable
-fun FoodItemCounter(
-    quantity: Int,
-    onAdd: () -> Unit,
+fun RemoveFoodItem(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.padding(vertical = 4.dp)
+    Surface(
+        color = MaterialTheme.colorScheme.inversePrimary,
+        modifier = modifier
+            .padding(vertical = 4.dp)
+            .clickable {
+                onRemove()
+            }
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = SmallPadding)
+
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = SmallPadding)
-                    .clickable {
-                        onRemove()
-                    }
-            ) {
-                if (quantity == 1)
-                    Icon(imageVector = Icons.Outlined.Delete, contentDescription = "close")
-                else
-                    Icon(
-                        painter = painterResource(R.drawable.ic_remove),
-                        contentDescription = "close"
-                    )
-            }
-            Text(
-                text = quantity.toString(),
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = Modifier.padding(horizontal = 10.dp)
+            Icon(
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = "close",
+                modifier = Modifier.align(Alignment.Center)
             )
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = SmallPadding)
-                    .clickable(
-                        enabled = quantity < 10
-                    ) {
-                        onAdd()
-                    }
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "add",
-                    tint = if (quantity == 10) MaterialTheme.colorScheme.surfaceDim else Color.Unspecified
-                )
-            }
         }
     }
 }
+
+//@Composable
+//fun FoodItemCounter(
+//    quantity: Int,
+//    onAdd: () -> Unit,
+//    onRemove: () -> Unit,
+//    modifier: Modifier = Modifier,
+//) {
+//    Box(modifier) {
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            modifier = Modifier.padding(vertical = 4.dp)
+//        ) {
+//            Box(
+//                modifier = Modifier
+//                    .padding(horizontal = SmallPadding)
+//                    .clickable {
+//                        onRemove()
+//                    }
+//            ) {
+//                if (quantity == 1)
+//                    Icon(imageVector = Icons.Outlined.Delete, contentDescription = "close")
+//                else
+//                    Icon(
+//                        painter = painterResource(R.drawable.ic_remove),
+//                        contentDescription = "close"
+//                    )
+//            }
+//            Text(
+//                text = quantity.toString(),
+//                style = MaterialTheme.typography.titleSmall.copy(
+//                    fontWeight = FontWeight.Bold
+//                ),
+//                modifier = Modifier.padding(horizontal = 10.dp)
+//            )
+//            Box(
+//                modifier = Modifier
+//                    .padding(horizontal = SmallPadding)
+//                    .clickable(
+//                        enabled = quantity < 10
+//                    ) {
+//                        onAdd()
+//                    }
+//            ) {
+//                Icon(
+//                    imageVector = Icons.Outlined.Add,
+//                    contentDescription = "add",
+//                    tint = if (quantity == 10) MaterialTheme.colorScheme.surfaceDim else Color.Unspecified
+//                )
+//            }
+//        }
+//    }
+//}

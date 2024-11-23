@@ -58,6 +58,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.core)
     implementation(libs.protobuf.javalite)
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.constraintlayout.compose)

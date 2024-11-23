@@ -28,10 +28,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.dialog
 import com.example.kainwell.ui.add_diet.AddDietScreen
 import com.example.kainwell.ui.add_diet.AddDietViewModel
-import com.example.kainwell.ui.food_detail.FoodDetail
 import com.example.kainwell.ui.home.Gallery
 import com.example.kainwell.ui.home.KainWellBottomBar
 import com.example.kainwell.ui.home.addHomeGraph
@@ -48,9 +46,6 @@ object AddDiet
 
 @Serializable
 object ViewMeal
-
-@Serializable
-data class FoodDetail(val foodId: String, val foodCategory: String)
 
 @SuppressLint("RestrictedApi")
 @Composable
@@ -77,28 +72,13 @@ fun KainWellApp() {
                     }
 
                     composableWithCompositionLocal<AddDiet> { backStackEntry ->
-                        val viewModel =
-                            hiltViewModel<AddDietViewModel>(
-                                kainWellNavController.getBackStackEntry(
-                                    AddDiet
-                                )
-                            )
                         AddDietScreen(
-                            onFoodClick = { foodId, foodCategory ->
-                                kainWellNavController.navigate(
-                                    route = FoodDetail(
-                                        foodId,
-                                        foodCategory
-                                    ), from = backStackEntry
-                                )
-                            },
                             navigateToViewMeal = {
                                 kainWellNavController.navigate(
                                     route = ViewMeal,
                                     from = backStackEntry
                                 )
-                            },
-                            viewModel,
+                            }
                         )
                     }
 
@@ -114,26 +94,6 @@ fun KainWellApp() {
                                 kainWellNavController.navController.popBackStack()
                             },
                             viewModel = viewModel
-                        )
-                    }
-
-                    dialog<FoodDetail>(
-                        dialogProperties = androidx.compose.ui.window.DialogProperties(
-                            usePlatformDefaultWidth = false,
-                            decorFitsSystemWindows = false
-                        )
-                    ) {
-                        val viewModel =
-                            hiltViewModel<AddDietViewModel>(
-                                kainWellNavController.getBackStackEntry(
-                                    AddDiet
-                                )
-                            )
-                        FoodDetail(
-                            onBack = {
-                                kainWellNavController.navController.popBackStack()
-                            },
-                            addDietViewModel = viewModel
                         )
                     }
                 }

@@ -159,7 +159,7 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
             }
 
             tableau[i][selectedFoodNutrients.size * 2 + i] = -1f
-            tableau[rows - 1][selectedFoodNutrients.size * 2 + i] = -10f
+            tableau[rows - 1][selectedFoodNutrients.size * 2 + i] = 10f
 
             // slack variables
             tableau[i][numConstraints + i] = 1f

@@ -24,7 +24,7 @@ class AddDietViewModel @Inject constructor(
     private val optimizeSelectedFoodItemsUseCase: OptimizeSelectedFoodItemsUseCase,
 ) : ViewModel() {
     private val _query = MutableStateFlow("")
-    private val _selectedFoodItems = MutableStateFlow<Map<Food, Int>>(emptyMap())
+    private val _selectedFoodItems = MutableStateFlow(emptySet<Food>())
 
     private val _uiState = MutableStateFlow<AddDietUiState>(AddDietUiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -87,52 +87,24 @@ class AddDietViewModel @Inject constructor(
     }
 
     fun onAddSelectedFoodItem(food: Food) {
-        _selectedFoodItems.value = _selectedFoodItems.value.toMutableMap().apply {
-            this[food] = this.getOrDefault(food, 0) + 1
+        _selectedFoodItems.value = _selectedFoodItems.value.toMutableSet().apply {
+            add(food)
         }
     }
 
     fun onRemoveSelectedFoodItem(food: Food) {
-        _selectedFoodItems.value = _selectedFoodItems.value.toMutableMap().apply {
-            if (this[food] == 1) {
-                remove(food)
-            } else {
-                this[food] = this.getOrDefault(food, 0) - 1
-            }
+        _selectedFoodItems.value = _selectedFoodItems.value.toMutableSet().apply {
+            remove(food)
         }
     }
 
-    fun onSelectedFoodItemsChange(selectedFoodItems: Map<Food, Int>) {
-        _selectedFoodItems.value = selectedFoodItems
-    }
-
     fun onResetSelectedFoodItems() {
-        _selectedFoodItems.value = emptyMap()
+        _selectedFoodItems.value = emptySet()
     }
 
     fun onOptimizeMeal() {
         viewModelScope.launch(Dispatchers.IO) {
-            val selectedFoodItems = _selectedFoodItems.value.map {
-                val food = Food(
-                    name = it.key.name,
-                    calories = it.key.calories * it.value,
-                    cholesterol = it.key.cholesterol * it.value,
-                    fat = it.key.fat * it.value,
-                    sodium = it.key.sodium * it.value,
-                    carbohydrates = it.key.carbohydrates * it.value,
-                    fiber = it.key.fiber * it.value,
-                    protein = it.key.protein * it.value,
-                    vitA = it.key.vitA * it.value,
-                    vitC = it.key.vitC * it.value,
-                    calcium = it.key.calcium * it.value,
-                    iron = it.key.iron * it.value,
-                    price = it.key.price * it.value
-                )
-
-                food
-            }
-
-            optimizeSelectedFoodItemsUseCase(selectedFoodItems)
+            optimizeSelectedFoodItemsUseCase(_selectedFoodItems.value.toList())
         }
     }
 }

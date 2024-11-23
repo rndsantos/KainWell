@@ -12,6 +12,6 @@ sealed interface AddDietUiState {
 
     data class Ready(
         val foodItems: Map<String, List<Food>>,
-        val selectedFoodItems: Map<Food, Int> = mapOf(),
+        val selectedFoodItems: Set<Food> = emptySet(),
     ) : AddDietUiState
 }
