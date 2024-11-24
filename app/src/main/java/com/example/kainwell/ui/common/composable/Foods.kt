@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -155,10 +154,11 @@ fun FoodItemCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth(0.7f)
                     )
-                    BadgedNutrientValue(value = "${food.calories} kcal") {
+                    MacronutrientValue(value = "${food.calories} kcal") {
                         Icon(
                             painter = painterResource(R.drawable.ic_calories),
                             contentDescription = "protein",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(14.dp)
                         )
                     }
@@ -166,30 +166,28 @@ fun FoodItemCard(
                         horizontalArrangement = Arrangement.spacedBy(SmallPadding),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        BadgedNutrientValue(value = "${food.protein}g") {
+                        MacronutrientValue(value = "${food.protein}g") {
                             Icon(
                                 painter = painterResource(R.drawable.ic_protein),
                                 contentDescription = "protein",
-                                tint = Color.Red,
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
-                        BadgedNutrientValue(value = "${food.carbohydrates}g") {
+                        MacronutrientValue(value = "${food.carbohydrates}g") {
                             Icon(
                                 painter = painterResource(R.drawable.ic_carbs),
                                 contentDescription = "carbs",
-                                tint = Color.Green,
+                                tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.size(14.dp)
-
                             )
                         }
-                        BadgedNutrientValue(value = "${food.fat}g") {
+                        MacronutrientValue(value = "${food.fat}g") {
                             Icon(
                                 painter = painterResource(R.drawable.ic_fats),
                                 contentDescription = "fats",
-                                tint = Color.Yellow,
+                                tint = MaterialTheme.colorScheme.tertiary,
                                 modifier = Modifier.size(14.dp)
-
                             )
                         }
                     }
@@ -206,8 +204,9 @@ fun FoodItemCard(
     }
 }
 
+
 @Composable
-fun BadgedNutrientValue(
+fun MacronutrientValue(
     value: String,
     modifier: Modifier = Modifier,
     icon: @Composable () -> Unit,
@@ -221,6 +220,7 @@ fun BadgedNutrientValue(
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -245,11 +245,5 @@ fun FoodImage(
             contentScale = ContentScale.Crop,
         )
     }
-}
-
-@Composable
-fun PrimaryNutrientCard(
-) {
-
 }
 

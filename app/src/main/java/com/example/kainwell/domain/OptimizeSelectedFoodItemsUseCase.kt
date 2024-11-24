@@ -6,6 +6,8 @@ import com.example.kainwell.data.nutrient.NutritionalIntakeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.math.pow
+import kotlin.math.round
 
 class OptimizeSelectedFoodItemsUseCase @Inject constructor(
     private val nutritionalIntakeRepository: NutritionalIntakeRepository,
@@ -104,6 +106,23 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
         }
     }
 
+    /**
+     * Extracts the food servings from the solution's basic solution.
+     */
+    private fun Solution.parseSolution(selectedFoodItemsSize: Int): FloatArray {
+        val servings = FloatArray(selectedFoodItemsSize)
+
+        System.arraycopy(
+            basicSolution,
+            basicSolution.size - selectedFoodItemsSize - 1,
+            servings,
+            0,
+            selectedFoodItemsSize
+        )
+
+        return servings
+    }
+
     private fun NutritionalIntakes.toMinimumNutrientList(): List<Float> = listOf(
         minimum.calories,
         minimum.cholesterol,
@@ -174,12 +193,49 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
         return tableau
     }
 
-    suspend operator fun invoke(selectedFoodItems: List<Food>) {
-        withContext(Dispatchers.IO) {
+    suspend operator fun invoke(selectedFoodItems: List<Food>): List<Food> {
+        return withContext(Dispatchers.IO) {
             val tableau = createTableau(selectedFoodItems)
 
             val simplex = Simplex(tableau, isMax = false)
-            val solution = simplex.solve()
+            val optimizedFoodServings = simplex.solve().parseSolution(selectedFoodItems.size)
+
+            optimizedFoodServings.zip(selectedFoodItems) { serving, food ->
+                if (serving <= 0f) {
+                    Food()
+                } else
+                    food.copy(
+                        servingSize = multiplyServingSize(food.servingSize, serving),
+                        price = (food.price * serving).round(),
+                        calories = (food.calories * serving).round(),
+                        cholesterol = (food.cholesterol * serving).round(),
+                        fat = (food.fat * serving).round(),
+                        sodium = (food.sodium * serving).round(),
+                        carbohydrates = (food.carbohydrates * serving).round(),
+                        fiber = (food.fiber * serving).round(),
+                        protein = (food.protein * serving).round(),
+                        vitA = (food.vitA * serving).round(),
+                        vitC = (food.vitC * serving).round(),
+                        calcium = (food.calcium * serving).round(),
+                        iron = (food.iron * serving).round()
+                    )
+            }.filter {
+                it.name.isNotEmpty()
+            }
         }
     }
+}
+
+private fun multiplyServingSize(servingSize: String, serving: Float): String {
+    val (servingValue, servingUnit) = servingSize.split(" ").let { parts ->
+        parts[0].toFloat() to parts[1]
+    }
+
+    val calculatedServingSize = (servingValue * serving).round()
+    return "$calculatedServingSize $servingUnit"
+}
+
+private fun Float.round(decimalPlace: Int = 2): Float {
+    val multiplier = 10f.pow(decimalPlace)
+    return round(this * multiplier) / multiplier
 }

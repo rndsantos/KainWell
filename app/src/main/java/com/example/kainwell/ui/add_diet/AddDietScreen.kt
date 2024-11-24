@@ -1,9 +1,12 @@
-@file:OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@file:OptIn(
+    ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class
+)
 
 package com.example.kainwell.ui.add_diet
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -28,9 +31,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -50,6 +50,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -92,6 +93,7 @@ import com.example.kainwell.ui.common.ext.bottomBorder
 import com.example.kainwell.ui.common.ext.titlecase
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun AddDietScreen(
     navigateToViewMeal: () -> Unit,
@@ -116,7 +118,7 @@ fun AddDietScreen(
 @Composable
 fun AddDietScreenReady(
     foodItems: Map<String, List<Food>>,
-    selectedFoodItems: Set<Food>,
+    selectedFoodItems: List<Food>,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
     onResetSelectedFoodItems: () -> Unit,
@@ -226,7 +228,7 @@ fun AddDietScreenReady(
 
 @Composable
 private fun AddDietBottomAppBar(
-    selectedFoodItems: Set<Food>,
+    selectedFoodItems: List<Food>,
     onResetMeal: () -> Unit,
     onNavigateToViewMeal: () -> Unit,
 ) {
@@ -247,7 +249,7 @@ private fun AddDietBottomAppBar(
 
 @Composable
 private fun ViewMealButton(
-    selectedFoodItems: Set<Food>,
+    selectedFoodItems: List<Food>,
     onResetMeal: () -> Unit,
     onNavigateToViewMeal: () -> Unit,
 ) {
@@ -276,24 +278,7 @@ private fun ViewMealButton(
 
     ) {
         Box {
-            Surface(
-                color = Color.Transparent,
-                shape = CircleShape,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimary),
-                modifier = Modifier
-                    .padding(10.dp)
-                    .size(25.dp)
-                    .aspectRatio(1f)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = selectedFoodItems.size.toString(),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
+            SelectedFoodItemsCount(selectedFoodItems.size)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -315,7 +300,7 @@ private fun ViewMealButton(
                     Text(
                         text = selectedFoodItems.joinToString { it.name },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.7f),
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -330,6 +315,28 @@ private fun ViewMealButton(
                 Icon(imageVector = Icons.Outlined.Clear, contentDescription = "clear meal")
             }
         }
+    }
+}
+
+@Composable
+fun SelectedFoodItemsCount(
+    size: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .padding(10.dp)
+            .size(25.dp)
+            .background(Color.Transparent)
+            .border(1.dp, MaterialTheme.colorScheme.onPrimary, CircleShape)
+            .clip(CircleShape)
+            .aspectRatio(1f)
+    ) {
+        Text(
+            text = size.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.align(Alignment.Center)
+        )
     }
 }
 
@@ -435,11 +442,12 @@ private fun SearchHint() {
     }
 }
 
+@Stable
 @Composable
 fun FoodItemCategory(
     category: String,
     foodItems: List<Food>,
-    selectedFoodItems: Set<Food>,
+    selectedFoodItems: List<Food>,
     onFoodClick: (Food) -> Unit,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
@@ -503,7 +511,6 @@ fun FoodDetailBottomSheet(
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surface)
                 .fillMaxWidth()
-                .navigationBarsPadding()
         ) {
             Box(
                 contentAlignment = Alignment.TopCenter,
@@ -571,6 +578,7 @@ fun FoodDetailBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(MediumPadding)
+                            .navigationBarsPadding()
                     ) {
                         KainWellButton(
                             onClick = onClick,
@@ -630,34 +638,35 @@ fun NutrientCard(
 
 @Composable
 fun NutritionalValuesGrid(food: Food) {
-    data class Nutrient(val name: String, val value: String, val useWeight: Boolean = false)
+    data class Nutrient(val name: String, val value: String)
 
     val nutrients = listOf(
-        Nutrient("Calories", "${food.calories}", useWeight = true),
-        Nutrient("Fat", "${food.fat} g"),
+        Nutrient("Calories", "${food.calories}"),
+        Nutrient("Protein", "${food.protein} g"),
         Nutrient("Carbs", "${food.carbohydrates} g"),
-        Nutrient("Protein", "${food.protein} g", useWeight = true),
+        Nutrient("Fat", "${food.fat} g"),
         Nutrient("Fiber", "${food.fiber} g"),
-        Nutrient("Sodium", "${food.sodium} mg", useWeight = true),
-        Nutrient("Vit A", "${food.vitA} IU", useWeight = true),
+        Nutrient("Sodium", "${food.sodium} mg"),
+        Nutrient("Vit A", "${food.vitA} IU"),
         Nutrient("Vit C", "${food.vitC} IU"),
-        Nutrient("Calcium", "${food.calcium} mg", useWeight = true),
-        Nutrient("Iron", "${food.iron} mg", useWeight = true),
-        Nutrient("Cholesterol", "${food.cholesterol} mg", useWeight = true)
+        Nutrient("Calcium", "${food.calcium} mg"),
+        Nutrient("Iron", "${food.iron} mg"),
+        Nutrient("Cholesterol", "${food.cholesterol} mg")
     )
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
+    FlowRow(
+        maxItemsInEachRow = 4,
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
             .padding(MediumPadding)
             .fillMaxWidth()
     ) {
-        items(nutrients) { nutrient ->
+        nutrients.map { nutrient ->
             NutrientCard(
                 name = nutrient.name,
                 value = nutrient.value,
+                modifier = Modifier.weight(1f)
             )
         }
     }

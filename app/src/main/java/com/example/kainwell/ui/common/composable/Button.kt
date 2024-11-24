@@ -53,7 +53,7 @@ fun KainWellButton(
             .then(
                 if (backgroundGradient.isNotEmpty()) {
                     Modifier.background(
-                        brush = Brush.horizontalGradient(
+                        brush = Brush.verticalGradient(
                             colors = if (enabled) backgroundGradient else disabledBackgroundGradient
                         )
                     )

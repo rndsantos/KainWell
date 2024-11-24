@@ -3,7 +3,11 @@ package com.example.kainwell.data.module
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import com.example.kainwell.Diets
 import com.example.kainwell.NutritionalIntakes
+import com.example.kainwell.data.diet.DietsSerializer
+import com.example.kainwell.data.diet.SavedDietsRepository
+import com.example.kainwell.data.diet.impl.SavedDietsRepositoryImpl
 import com.example.kainwell.data.food.FoodRepository
 import com.example.kainwell.data.food.impl.FoodRepositoryImpl
 import com.example.kainwell.data.nutrient.NutritionalIntakeRepository
@@ -22,6 +26,11 @@ val Context.nutritionalIntakeDataStore: DataStore<NutritionalIntakes> by dataSto
     serializer = NutritionalIntakeSerializer
 )
 
+val Context.savedDietsDataStore: DataStore<Diets> by dataStore(
+    fileName = "saved_diets.pb",
+    serializer = DietsSerializer
+)
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
@@ -31,6 +40,9 @@ abstract class RepositoryModule {
     @Binds
     abstract fun provideNutritionalIntakeRepository(impl: NutritionalIntakeRepositoryImpl): NutritionalIntakeRepository
 
+    @Binds
+    abstract fun provideSavedDietsDataStore(impl: SavedDietsRepositoryImpl): SavedDietsRepository
+
     companion object {
         @Provides
         @Singleton
@@ -38,6 +50,14 @@ abstract class RepositoryModule {
             @ApplicationContext applicationContext: Context,
         ): DataStore<NutritionalIntakes> {
             return applicationContext.nutritionalIntakeDataStore
+        }
+
+        @Provides
+        @Singleton
+        fun provideSavedDietsDataStore(
+            @ApplicationContext applicationContext: Context,
+        ): DataStore<Diets> {
+            return applicationContext.savedDietsDataStore
         }
     }
 }

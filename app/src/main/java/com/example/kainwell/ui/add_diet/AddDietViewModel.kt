@@ -2,7 +2,9 @@ package com.example.kainwell.ui.add_diet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.kainwell.Diet
 import com.example.kainwell.Nutrient
+import com.example.kainwell.data.diet.SavedDietsRepository
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.data.food.FoodRepository
 import com.example.kainwell.data.nutrient.NutritionalIntakeRepository
@@ -21,10 +23,12 @@ import javax.inject.Inject
 class AddDietViewModel @Inject constructor(
     foodRepository: FoodRepository,
     nutritionalIntakeRepository: NutritionalIntakeRepository,
+    private val savedDietsRepository: SavedDietsRepository,
     private val optimizeSelectedFoodItemsUseCase: OptimizeSelectedFoodItemsUseCase,
 ) : ViewModel() {
     private val _query = MutableStateFlow("")
-    private val _selectedFoodItems = MutableStateFlow(emptySet<Food>())
+    private val _selectedFoodItems = MutableStateFlow(emptyList<Food>())
+    private val _optimizedDiet = MutableStateFlow(emptyList<Food>())
 
     private val _uiState = MutableStateFlow<AddDietUiState>(AddDietUiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -66,13 +70,15 @@ class AddDietViewModel @Inject constructor(
             combine(
                 foodRepository.getCategorizedFoodItems(),
                 _query,
-                _selectedFoodItems
-            ) { foodItems, query, selectedFoodItems ->
+                _selectedFoodItems,
+                _optimizedDiet
+            ) { foodItems, query, selectedFoodItems, optimizedDiet ->
                 AddDietUiState.Ready(
                     foodItems = foodItems.filter {
                         it.key.contains(query, ignoreCase = true)
                     },
-                    selectedFoodItems = selectedFoodItems
+                    selectedFoodItems = selectedFoodItems,
+                    optimizedDiet = optimizedDiet
                 )
             }.catch { throwable ->
                 AddDietUiState.Error(throwable.message ?: "Unknown error")
@@ -87,24 +93,38 @@ class AddDietViewModel @Inject constructor(
     }
 
     fun onAddSelectedFoodItem(food: Food) {
-        _selectedFoodItems.value = _selectedFoodItems.value.toMutableSet().apply {
+        _selectedFoodItems.value = _selectedFoodItems.value.toMutableList().apply {
             add(food)
         }
     }
 
     fun onRemoveSelectedFoodItem(food: Food) {
-        _selectedFoodItems.value = _selectedFoodItems.value.toMutableSet().apply {
+        _selectedFoodItems.value = _selectedFoodItems.value.toMutableList().apply {
             remove(food)
         }
     }
 
     fun onResetSelectedFoodItems() {
-        _selectedFoodItems.value = emptySet()
+        _selectedFoodItems.value = emptyList()
+    }
+
+    fun onAddDiet() {
+        viewModelScope.launch(Dispatchers.IO) {
+            savedDietsRepository.addDiet(
+                Diet.newBuilder()
+                    .addAllNames(_optimizedDiet.value.map { it.name })
+                    .build()
+            )
+        }
     }
 
     fun onOptimizeMeal() {
+        _optimizedDiet.value = emptyList()
+        _uiState.value = AddDietUiState.Loading
+
         viewModelScope.launch(Dispatchers.IO) {
-            optimizeSelectedFoodItemsUseCase(_selectedFoodItems.value.toList())
+            _optimizedDiet.value =
+                optimizeSelectedFoodItemsUseCase(_selectedFoodItems.value)
         }
     }
 }

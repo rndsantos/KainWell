@@ -1,13 +1,15 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.example.kainwell.ui.meal
+package com.example.kainwell.ui.add_diet.view
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +20,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -28,19 +29,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
+import com.example.kainwell.ui.Dimensions.LargePadding
+import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.add_diet.AddDietUiState
 import com.example.kainwell.ui.add_diet.AddDietViewModel
+import com.example.kainwell.ui.add_diet.SelectedFoodItemsCount
 import com.example.kainwell.ui.common.composable.FoodImage
 import com.example.kainwell.ui.common.composable.KainWellButton
+import com.example.kainwell.ui.common.composable.LoadingScreen
+import com.example.kainwell.ui.common.composable.MacronutrientValue
 
 @Composable
 fun ViewMealScreen(
+    onNavigateToViewOptimizedDiet: () -> Unit,
     onBack: () -> Unit,
     viewModel: AddDietViewModel = hiltViewModel(),
 ) {
@@ -48,11 +57,15 @@ fun ViewMealScreen(
     when (val state = uiState) {
         is AddDietUiState.Ready -> ViewMealScreenReady(
             selectedFoodItems = state.selectedFoodItems,
+            optimizedDiet = state.optimizedDiet,
+            onNavigateToViewOptimizedDiet = onNavigateToViewOptimizedDiet,
             onAddSelectedFoodItem = viewModel::onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = viewModel::onRemoveSelectedFoodItem,
             onOptimizeMeal = viewModel::onOptimizeMeal,
             onBack = onBack
         )
+
+        is AddDietUiState.Loading -> LoadingScreen()
 
         else -> throw IllegalStateException("UI state found is not preloaded yet.")
     }
@@ -60,7 +73,9 @@ fun ViewMealScreen(
 
 @Composable
 fun ViewMealScreenReady(
-    selectedFoodItems: Set<Food>,
+    selectedFoodItems: List<Food>,
+    optimizedDiet: List<Food>,
+    onNavigateToViewOptimizedDiet: () -> Unit,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
     onOptimizeMeal: () -> Unit,
@@ -80,12 +95,20 @@ fun ViewMealScreenReady(
                     IconButton(onClick = onBack) {
                         Icon(imageVector = Icons.Outlined.Close, contentDescription = "close")
                     }
+                },
+                actions = {
+                    SelectedFoodItemsCount(
+                        size = selectedFoodItems.size,
+                    )
                 }
             )
         },
         bottomBar = {
             ViewMealBottomAppBar(
-                onOptimizeMeal = onOptimizeMeal
+                onOptimizeMeal = {
+                    onOptimizeMeal()
+                    onNavigateToViewOptimizedDiet()
+                }
             )
         },
     ) { innerPadding ->
@@ -103,26 +126,25 @@ fun ViewMealBottomAppBar(
     onOptimizeMeal: () -> Unit,
 ) {
     Surface(
-        shape = MaterialTheme.shapes.large,
         shadowElevation = 5.dp,
-        modifier = Modifier
-            .height(90.dp)
     ) {
         KainWellButton(
             onClick = onOptimizeMeal,
             containerColor = MaterialTheme.colorScheme.inverseSurface,
-            backgroundGradient = listOf(
-                MaterialTheme.colorScheme.primary,
-                MaterialTheme.colorScheme.tertiary
+            shape = MaterialTheme.shapes.large.copy(
+                topStart = MaterialTheme.shapes.large.bottomStart,
+                topEnd = MaterialTheme.shapes.large.bottomEnd
             ),
-            shape = MaterialTheme.shapes.small,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = "Optimize Diet",
-                style = MaterialTheme.typography.labelLarge.copy(
+                style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
+                modifier = Modifier
+                    .padding(LargePadding)
+                    .navigationBarsPadding()
             )
         }
     }
@@ -139,65 +161,99 @@ fun ViewMealContent(
         contentPadding = innerPadding,
         modifier = Modifier.fillMaxSize()
     ) {
-        items(selectedFoodItems) { foodItem ->
-            ListItem(
-                headlineContent = {
-                    Text(
-                        foodItem.name,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
-                leadingContent = {
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.size(50.dp)
-                    ) {
-                        FoodImage(
-                            imageUrl = foodItem.img,
-                            contentDescription = foodItem.name
-                        )
-                    }
-                },
-                trailingContent = {
-                    IconButton(onClick = {
-                        onRemoveSelectedFoodItem(foodItem)
-                    }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Delete,
-                            contentDescription = "close"
-                        )
-                    }
-                }
-            )
+        items(selectedFoodItems) { food ->
+            FoodListItem(food = food, onRemoveSelectedFoodItem = onRemoveSelectedFoodItem)
         }
     }
 }
 
 @Composable
-fun RemoveFoodItem(
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier,
+fun FoodListItem(
+    food: Food,
+    onRemoveSelectedFoodItem: (Food) -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.inversePrimary,
-        modifier = modifier
-            .padding(vertical = 4.dp)
-            .clickable {
-                onRemove()
-            }
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.padding(vertical = SmallPadding, horizontal = MediumPadding)
     ) {
-        Box(
-            modifier = Modifier
-                .padding(horizontal = SmallPadding)
-
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(MediumPadding),
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Delete,
-                contentDescription = "close",
-                modifier = Modifier.align(Alignment.Center)
-            )
+            Surface(
+                modifier = Modifier.size(120.dp)
+            ) {
+                FoodImage(
+                    imageUrl = food.img,
+                    contentDescription = food.name
+                )
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .align(Alignment.CenterVertically)
+            ) {
+                Text(
+                    food.name,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    MacronutrientValue(value = "${food.calories} kcal") {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_calories),
+                            contentDescription = "protein",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(SmallPadding),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MacronutrientValue(value = "${food.protein}g") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_protein),
+                                contentDescription = "protein",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                        MacronutrientValue(value = "${food.carbohydrates}g") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_carbs),
+                                contentDescription = "carbs",
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                        MacronutrientValue(value = "${food.fat}g") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_fats),
+                                contentDescription = "fats",
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            IconButton(onClick = {
+                onRemoveSelectedFoodItem(food)
+            }) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "close"
+                )
+            }
         }
     }
 }
