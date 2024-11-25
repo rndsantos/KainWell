@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-
 option java_package = "com.example.kainwell";
 option java_multiple_files = true;
 
-message Diet {
+message DietEntity {
     repeated string names = 1;
+    repeated float servings = 2;
 }
 
-message Diets {
-    repeated Diet diets = 1;
+message DietsEntity {
+    repeated DietEntity diets = 1;
 }

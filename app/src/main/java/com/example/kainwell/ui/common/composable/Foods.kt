@@ -232,7 +232,6 @@ fun FoodImage(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-
         modifier = modifier
     ) {
         AsyncImage(

@@ -1,8 +1,8 @@
 package com.example.kainwell.domain
 
-import com.example.kainwell.NutritionalIntakes
+import com.example.kainwell.NutritionalIntakesEntity
 import com.example.kainwell.data.food.Food
-import com.example.kainwell.data.nutrient.NutritionalIntakeRepository
+import com.example.kainwell.data.nutrient.NutritionalIntakesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -10,7 +10,7 @@ import kotlin.math.pow
 import kotlin.math.round
 
 class OptimizeSelectedFoodItemsUseCase @Inject constructor(
-    private val nutritionalIntakeRepository: NutritionalIntakeRepository,
+    private val nutritionalIntakesRepository: NutritionalIntakesRepository,
 ) {
     private data class Solution(
         val finalTableau: Array<FloatArray>,
@@ -123,7 +123,7 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
         return servings
     }
 
-    private fun NutritionalIntakes.toMinimumNutrientList(): List<Float> = listOf(
+    private fun NutritionalIntakesEntity.toMinimumNutrientList(): List<Float> = listOf(
         minimum.calories,
         minimum.cholesterol,
         minimum.fat,
@@ -137,7 +137,7 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
         minimum.iron
     )
 
-    private fun NutritionalIntakes.toMaximumNutrientList(): List<Float> = listOf(
+    private fun NutritionalIntakesEntity.toMaximumNutrientList(): List<Float> = listOf(
         maximum.calories,
         maximum.cholesterol, maximum.fat,
         maximum.sodium,
@@ -151,7 +151,7 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
     )
 
     private suspend fun createTableau(selectedFoodItems: List<Food>): Array<FloatArray> {
-        val nutritionalIntakes = nutritionalIntakeRepository.getNutritionalIntakes()
+        val nutritionalIntakes = nutritionalIntakesRepository.getNutritionalIntakes()
 
         val minimumNutrientValues = nutritionalIntakes.toMinimumNutrientList()
         val maximumNutrientValues = nutritionalIntakes.toMaximumNutrientList()
@@ -204,21 +204,7 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
                 if (serving <= 0f) {
                     Food()
                 } else
-                    food.copy(
-                        servingSize = multiplyServingSize(food.servingSize, serving),
-                        price = (food.price * serving).round(),
-                        calories = (food.calories * serving).round(),
-                        cholesterol = (food.cholesterol * serving).round(),
-                        fat = (food.fat * serving).round(),
-                        sodium = (food.sodium * serving).round(),
-                        carbohydrates = (food.carbohydrates * serving).round(),
-                        fiber = (food.fiber * serving).round(),
-                        protein = (food.protein * serving).round(),
-                        vitA = (food.vitA * serving).round(),
-                        vitC = (food.vitC * serving).round(),
-                        calcium = (food.calcium * serving).round(),
-                        iron = (food.iron * serving).round()
-                    )
+                    food.updateData(serving)
             }.filter {
                 it.name.isNotEmpty()
             }
@@ -238,4 +224,23 @@ private fun multiplyServingSize(servingSize: String, serving: Float): String {
 private fun Float.round(decimalPlace: Int = 2): Float {
     val multiplier = 10f.pow(decimalPlace)
     return round(this * multiplier) / multiplier
+}
+
+fun Food.updateData(serving: Float): Food {
+    return this.copy(
+        serving = serving,
+        servingSize = multiplyServingSize(servingSize, serving),
+        calories = (calories * serving).round(),
+        cholesterol = (cholesterol * serving).round(),
+        fat = (fat * serving).round(),
+        sodium = (sodium * serving).round(),
+        carbohydrates = (carbohydrates * serving).round(),
+        fiber = (fiber * serving).round(),
+        protein = (protein * serving).round(),
+        vitA = (vitA * serving).round(),
+        vitC = (vitC * serving).round(),
+        calcium = (calcium * serving).round(),
+        iron = (iron * serving).round(),
+        price = (price * serving).round(),
+    )
 }

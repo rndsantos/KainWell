@@ -3,7 +3,7 @@ syntax = "proto3";
 option java_package = "com.example.kainwell";
 option java_multiple_files = true;
 
-message Nutrient {
+message NutrientEntity {
     float calories = 1;
     float cholesterol = 2;
     float fat = 3;
@@ -17,7 +17,7 @@ message Nutrient {
     float iron = 11;
 }
 
-message NutritionalIntakes {
-    Nutrient minimum = 1;
-    Nutrient maximum = 2;
+message NutritionalIntakesEntity {
+    NutrientEntity minimum = 1;
+    NutrientEntity maximum = 2;
 }

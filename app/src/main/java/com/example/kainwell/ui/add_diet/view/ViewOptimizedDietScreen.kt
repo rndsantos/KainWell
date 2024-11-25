@@ -49,6 +49,7 @@ import com.example.kainwell.ui.common.composable.MacronutrientValue
 
 @Composable
 fun ViewOptimizedDietScreen(
+    onNavigateToHome: () -> Unit,
     onBack: () -> Unit,
     viewModel: AddDietViewModel = hiltViewModel(),
 ) {
@@ -57,6 +58,7 @@ fun ViewOptimizedDietScreen(
         is AddDietUiState.Ready -> ViewOptimizedDietScreenReady(
             optimizedDiet = state.optimizedDiet,
             onAddDiet = viewModel::onAddDiet,
+            onNavigateToHome = onNavigateToHome,
             onBack = onBack
         )
 
@@ -70,6 +72,7 @@ fun ViewOptimizedDietScreen(
 fun ViewOptimizedDietScreenReady(
     optimizedDiet: List<Food>,
     onAddDiet: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onBack: () -> Unit,
 ) {
     Scaffold(
@@ -94,7 +97,10 @@ fun ViewOptimizedDietScreenReady(
         },
         bottomBar = {
             ViewOptimizedDietBottomAppBar(
-                onAddDiet = onAddDiet
+                onAddDiet = {
+                    onAddDiet()
+                    onNavigateToHome()
+                }
             )
         },
     ) { innerPadding ->
