@@ -7,6 +7,7 @@ import com.google.firebase.firestore.DocumentId
 data class Food(
     @DocumentId val id: String = "",
     val name: String = "",
+    val serving: Float = 0f,
     val price: Float = 0f,
     val servingSize: String = "",
     val calories: Float = 0f,

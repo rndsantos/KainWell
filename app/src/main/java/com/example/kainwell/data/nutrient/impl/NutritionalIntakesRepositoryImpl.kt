@@ -1,35 +1,35 @@
 package com.example.kainwell.data.nutrient.impl
 
 import androidx.datastore.core.DataStore
-import com.example.kainwell.Nutrient
-import com.example.kainwell.NutritionalIntakes
-import com.example.kainwell.data.nutrient.NutritionalIntakeRepository
+import com.example.kainwell.NutrientEntity
+import com.example.kainwell.NutritionalIntakesEntity
+import com.example.kainwell.data.nutrient.NutritionalIntakesRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import java.io.IOException
 import javax.inject.Inject
 
-class NutritionalIntakeRepositoryImpl @Inject constructor(
-    private val nutritionalIntakeDataStore: DataStore<NutritionalIntakes>,
-) : NutritionalIntakeRepository {
-    override suspend fun getNutritionalIntakes(): NutritionalIntakes =
+class NutritionalIntakesRepositoryImpl @Inject constructor(
+    private val nutritionalIntakeDataStore: DataStore<NutritionalIntakesEntity>,
+) : NutritionalIntakesRepository {
+    override suspend fun getNutritionalIntakes(): NutritionalIntakesEntity =
         nutritionalIntakeDataStore.data
             .catch { throwable ->
                 if (throwable is IOException) {
-                    emit(NutritionalIntakes.getDefaultInstance())
+                    emit(NutritionalIntakesEntity.getDefaultInstance())
                 } else {
                     throw throwable
                 }
             }
-            .firstOrNull() ?: NutritionalIntakes.getDefaultInstance()
+            .firstOrNull() ?: NutritionalIntakesEntity.getDefaultInstance()
 
-    override suspend fun setMinimumNutritionalIntake(nutrient: Nutrient) {
+    override suspend fun setMinimumNutritionalIntake(nutrient: NutrientEntity) {
         nutritionalIntakeDataStore.updateData {
             it.toBuilder().setMinimum(nutrient).build()
         }
     }
 
-    override suspend fun setMaximumNutritionalIntake(nutrient: Nutrient) {
+    override suspend fun setMaximumNutritionalIntake(nutrient: NutrientEntity) {
         nutritionalIntakeDataStore.updateData {
             it.toBuilder().setMaximum(nutrient).build()
         }

@@ -2,12 +2,12 @@ package com.example.kainwell.ui.add_diet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.kainwell.Diet
-import com.example.kainwell.Nutrient
+import com.example.kainwell.DietEntity
+import com.example.kainwell.NutrientEntity
 import com.example.kainwell.data.diet.SavedDietsRepository
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.data.food.FoodRepository
-import com.example.kainwell.data.nutrient.NutritionalIntakeRepository
+import com.example.kainwell.data.nutrient.NutritionalIntakesRepository
 import com.example.kainwell.domain.OptimizeSelectedFoodItemsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AddDietViewModel @Inject constructor(
     foodRepository: FoodRepository,
-    nutritionalIntakeRepository: NutritionalIntakeRepository,
+    nutritionalIntakesRepository: NutritionalIntakesRepository,
     private val savedDietsRepository: SavedDietsRepository,
     private val optimizeSelectedFoodItemsUseCase: OptimizeSelectedFoodItemsUseCase,
 ) : ViewModel() {
@@ -35,8 +35,8 @@ class AddDietViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            nutritionalIntakeRepository.setMinimumNutritionalIntake(
-                Nutrient.newBuilder().apply {
+            nutritionalIntakesRepository.setMinimumNutritionalIntake(
+                NutrientEntity.newBuilder().apply {
                     calories = 2000f
                     cholesterol = 0f
                     fat = 0f
@@ -51,8 +51,8 @@ class AddDietViewModel @Inject constructor(
                 }.build()
             )
 
-            nutritionalIntakeRepository.setMaximumNutritionalIntake(
-                Nutrient.newBuilder().apply {
+            nutritionalIntakesRepository.setMaximumNutritionalIntake(
+                NutrientEntity.newBuilder().apply {
                     calories = 2250f
                     cholesterol = 300f
                     fat = 65f
@@ -111,8 +111,9 @@ class AddDietViewModel @Inject constructor(
     fun onAddDiet() {
         viewModelScope.launch(Dispatchers.IO) {
             savedDietsRepository.addDiet(
-                Diet.newBuilder()
+                DietEntity.newBuilder()
                     .addAllNames(_optimizedDiet.value.map { it.name })
+                    .addAllServings(_optimizedDiet.value.map { it.serving })
                     .build()
             )
         }
