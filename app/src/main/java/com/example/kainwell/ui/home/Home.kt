@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.outlined.AddCircle
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
@@ -61,7 +61,7 @@ fun KainWellBottomBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             BottomNavItem(
-                icon = Icons.Outlined.FavoriteBorder,
+                icon = Icons.Filled.FavoriteBorder,
                 label = "Diets",
                 onClick = {
                     navigateToRoute(Diet)
