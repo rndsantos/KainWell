@@ -5,6 +5,9 @@
 
 package com.example.kainwell.ui.add_diet
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,15 +18,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -35,9 +35,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,7 +50,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,37 +58,35 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.composables.core.DragIndication
-import com.composables.core.ModalBottomSheet
-import com.composables.core.ModalBottomSheetState
-import com.composables.core.Scrim
-import com.composables.core.Sheet
 import com.composables.core.SheetDetent.Companion.FullyExpanded
 import com.composables.core.SheetDetent.Companion.Hidden
 import com.composables.core.rememberModalBottomSheetState
+import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.ui.Dimensions.ExtraLargePadding
 import com.example.kainwell.ui.Dimensions.LargePadding
 import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.common.composable.ErrorScreen
-import com.example.kainwell.ui.common.composable.FoodImage
+import com.example.kainwell.ui.common.composable.FoodDetailBottomSheet
 import com.example.kainwell.ui.common.composable.FoodItemCard
-import com.example.kainwell.ui.common.composable.KainWellButton
 import com.example.kainwell.ui.common.composable.LoadingScreen
-import com.example.kainwell.ui.common.ext.bottomBorder
 import com.example.kainwell.ui.common.ext.titlecase
 import kotlinx.coroutines.launch
 
@@ -97,6 +94,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AddDietScreen(
     navigateToViewMeal: () -> Unit,
+    onBack: () -> Unit,
     viewModel: AddDietViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -106,9 +104,12 @@ fun AddDietScreen(
         is AddDietUiState.Ready -> AddDietScreenReady(
             foodItems = state.foodItems,
             selectedFoodItems = state.selectedFoodItems,
+            onQueryChange = viewModel::onQueryChange,
             onAddSelectedFoodItem = viewModel::onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = viewModel::onRemoveSelectedFoodItem,
+            onSelectAllFoodItems = viewModel::onSelectAllFoodItems,
             onResetSelectedFoodItems = viewModel::onResetSelectedFoodItems,
+            onBack = onBack,
             navigateToViewMeal = navigateToViewMeal,
         )
     }
@@ -116,12 +117,15 @@ fun AddDietScreen(
 }
 
 @Composable
-fun AddDietScreenReady(
+private fun AddDietScreenReady(
     foodItems: Map<String, List<Food>>,
     selectedFoodItems: List<Food>,
+    onQueryChange: (String) -> Unit,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
+    onSelectAllFoodItems: (List<Food>) -> Unit,
     onResetSelectedFoodItems: () -> Unit,
+    onBack: () -> Unit,
     navigateToViewMeal: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -142,14 +146,33 @@ fun AddDietScreenReady(
             Column(
                 Modifier.statusBarsPadding()
             ) {
-                SearchBar(
-                    query = query,
-                    onQueryChange = { query = it },
-                    modifier = Modifier.padding(
-                        start = MediumPadding,
-                        end = MediumPadding
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "back"
+                        )
+                    }
+                    SearchBar(
+                        query = query,
+                        onQueryChange = {
+                            query = it
+                            onQueryChange(it.text)
+                        },
+                        modifier = Modifier.weight(1f)
                     )
-                )
+                    IconButton(onClick = {
+                        onSelectAllFoodItems(foodItems.values.flatten())
+                    }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_select_all),
+                            contentDescription = "back",
+                        )
+                    }
+                }
                 CategoryList(
                     categories = foodItems.keys.toList(),
                     selectedCategoryIndex = selectedCategory,
@@ -162,49 +185,68 @@ fun AddDietScreenReady(
                     modifier = Modifier.padding(
                         start = SmallPadding,
                         end = SmallPadding,
-                        top = LargePadding
+                        top = MediumPadding
                     )
                 )
                 HorizontalDivider()
             }
         },
         bottomBar = {
-            if (selectedFoodItems.isEmpty())
-                return@Scaffold
-
-            AddDietBottomAppBar(
-                selectedFoodItems = selectedFoodItems,
-                onResetMeal = onResetSelectedFoodItems,
-                onNavigateToViewMeal = {
-                    navigateToViewMeal()
-                }
-            )
-        },
-    ) { innerPadding ->
-        LazyColumn(
-            state = lazyListState,
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = MediumPadding)
-        ) {
-            items(
-                items = foodItems.entries.toList(),
-                key = { it.key }
-            ) { foodCategory ->
-                FoodItemCategory(
-                    category = foodCategory.key,
-                    foodItems = foodCategory.value,
+            AnimatedVisibility(
+                visible = selectedFoodItems.isNotEmpty(),
+                enter = slideInVertically {
+                    it
+                }, exit = slideOutVertically {
+                    it
+                }) {
+                AddDietBottomAppBar(
                     selectedFoodItems = selectedFoodItems,
-                    onFoodClick = { food ->
-                        selectedFood = food
-                        sheetState.currentDetent = FullyExpanded
-                    },
-                    onAddSelectedFoodItem = onAddSelectedFoodItem,
-                    onRemoveSelectedFoodItem = onRemoveSelectedFoodItem,
-                    modifier = Modifier.padding(top = MediumPadding)
+                    onResetMeal = onResetSelectedFoodItems,
+                    onNavigateToViewMeal = {
+                        navigateToViewMeal()
+                    }
                 )
             }
-        }
+        },
+    ) { innerPadding ->
+        if (foodItems.isEmpty()) {
+            Box(
+                contentAlignment = Alignment.Center, modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        LargePadding
+                    )
+            ) {
+                Text(
+                    text = "Unknown food \"${query.text}\"",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        } else
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(horizontal = MediumPadding)
+            ) {
+                items(
+                    items = foodItems.entries.toList(),
+                    key = { it.key }
+                ) { foodCategory ->
+                    FoodItemCategory(
+                        category = foodCategory.key,
+                        foodItems = foodCategory.value,
+                        selectedFoodItems = selectedFoodItems,
+                        onFoodClick = { food ->
+                            selectedFood = food
+                            sheetState.currentDetent = FullyExpanded
+                        },
+                        onAddSelectedFoodItem = onAddSelectedFoodItem,
+                        onRemoveSelectedFoodItem = onRemoveSelectedFoodItem,
+                        modifier = Modifier.padding(top = MediumPadding)
+                    )
+                }
+            }
 
         FoodDetailBottomSheet(
             food = selectedFood,
@@ -225,6 +267,28 @@ fun AddDietScreenReady(
     }
 }
 
+
+@Composable
+fun SelectedFoodItemsCount(
+    size: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .padding(10.dp)
+            .size(25.dp)
+            .background(Color.Transparent)
+            .border(1.dp, MaterialTheme.colorScheme.onPrimary, CircleShape)
+            .clip(CircleShape)
+            .aspectRatio(1f)
+    ) {
+        Text(
+            text = size.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
 
 @Composable
 private fun AddDietBottomAppBar(
@@ -319,29 +383,7 @@ private fun ViewMealButton(
 }
 
 @Composable
-fun SelectedFoodItemsCount(
-    size: Int,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .padding(10.dp)
-            .size(25.dp)
-            .background(Color.Transparent)
-            .border(1.dp, MaterialTheme.colorScheme.onPrimary, CircleShape)
-            .clip(CircleShape)
-            .aspectRatio(1f)
-    ) {
-        Text(
-            text = size.toString(),
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.align(Alignment.Center)
-        )
-    }
-}
-
-@Composable
-fun CategoryList(
+private fun CategoryList(
     categories: List<String>,
     selectedCategoryIndex: Int,
     onCategorySelected: (Int) -> Unit,
@@ -376,6 +418,25 @@ fun CategoryList(
     }
 }
 
+private fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
+    factory = {
+        val density = LocalDensity.current
+        val strokeWidthPx = density.run { strokeWidth.toPx() }
+
+        Modifier.drawBehind {
+            val width = size.width
+            val height = size.height + SmallPadding.toPx() - strokeWidthPx / 2
+
+            drawLine(
+                color = color,
+                start = Offset(x = 0f, y = height),
+                end = Offset(x = width, y = height),
+                strokeWidth = strokeWidthPx
+            )
+        }
+    }
+)
+
 @Composable
 fun SearchBar(
     query: TextFieldValue,
@@ -387,7 +448,6 @@ fun SearchBar(
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = MaterialTheme.shapes.extraLarge,
         modifier = modifier
-            .fillMaxWidth()
             .height(40.dp)
     ) {
         Box(
@@ -442,9 +502,8 @@ private fun SearchHint() {
     }
 }
 
-@Stable
 @Composable
-fun FoodItemCategory(
+private fun FoodItemCategory(
     category: String,
     foodItems: List<Food>,
     selectedFoodItems: List<Food>,
@@ -492,184 +551,6 @@ fun FoodItemCategory(
     }
 }
 
-@Composable
-fun FoodDetailBottomSheet(
-    food: Food,
-    selected: Boolean,
-    sheetState: ModalBottomSheetState,
-    onClick: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    ModalBottomSheet(
-        state = sheetState,
-        onDismiss = onDismiss
-    ) {
-        Scrim()
-        Sheet(
-            modifier = Modifier
-                .shadow(4.dp, MaterialTheme.shapes.medium)
-                .clip(MaterialTheme.shapes.medium)
-                .background(MaterialTheme.colorScheme.surface)
-                .fillMaxWidth()
-        ) {
-            Box(
-                contentAlignment = Alignment.TopCenter,
-                modifier = Modifier
-                    .fillMaxHeight(0.8f)
-            ) {
-                DragIndication(
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .background(
-                            MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(100)
-                        )
-                        .width(48.dp)
-                        .height(4.dp)
-                        .zIndex(1f)
-                )
-                Column {
-                    FoodImage(
-                        imageUrl = food.img,
-                        contentDescription = food.name,
-                        modifier = Modifier
-                            .aspectRatio(1.67f)
-                    )
-                    Column(
-                        modifier = Modifier.padding(MediumPadding)
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column {
-                                Text(
-                                    text = food.name,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Black
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = "$${food.price}",
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                            Text(
-                                text = food.servingSize,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                        Spacer(Modifier.height(SmallPadding))
-                        NutritionalValuesGrid(food)
-                    }
-                }
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 8.dp,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.align(Alignment.BottomStart)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(SmallPadding),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(MediumPadding)
-                            .navigationBarsPadding()
-                    ) {
-                        KainWellButton(
-                            onClick = onClick,
-                            containerColor = MaterialTheme.colorScheme.inverseSurface,
-                            contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                            contentPadding = PaddingValues(
-                                horizontal = ExtraLargePadding,
-                                vertical = SmallPadding
-                            ),
-                            shape = MaterialTheme.shapes.small,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = if (selected) "Remove from meal" else "Add to meal",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
-@Composable
-fun NutrientCard(
-    name: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shadowElevation = 1.dp,
-        shape = MaterialTheme.shapes.extraLarge,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        modifier = modifier
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .padding(MediumPadding)
-
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(LargePadding))
-            Text(text = value, style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}
-
-@Composable
-fun NutritionalValuesGrid(food: Food) {
-    data class Nutrient(val name: String, val value: String)
-
-    val nutrients = listOf(
-        Nutrient("Calories", "${food.calories}"),
-        Nutrient("Protein", "${food.protein} g"),
-        Nutrient("Carbs", "${food.carbohydrates} g"),
-        Nutrient("Fat", "${food.fat} g"),
-        Nutrient("Fiber", "${food.fiber} g"),
-        Nutrient("Sodium", "${food.sodium} mg"),
-        Nutrient("Vit A", "${food.vitA} IU"),
-        Nutrient("Vit C", "${food.vitC} IU"),
-        Nutrient("Calcium", "${food.calcium} mg"),
-        Nutrient("Iron", "${food.iron} mg"),
-        Nutrient("Cholesterol", "${food.cholesterol} mg")
-    )
-
-    FlowRow(
-        maxItemsInEachRow = 4,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier
-            .padding(MediumPadding)
-            .fillMaxWidth()
-    ) {
-        nutrients.map { nutrient ->
-            NutrientCard(
-                name = nutrient.name,
-                value = nutrient.value,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
 
 

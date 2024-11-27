@@ -74,9 +74,7 @@ class AddDietViewModel @Inject constructor(
                 _optimizedDiet
             ) { foodItems, query, selectedFoodItems, optimizedDiet ->
                 AddDietUiState.Ready(
-                    foodItems = foodItems.filter {
-                        it.key.contains(query, ignoreCase = true)
-                    },
+                    foodItems = foodItems.filter(query),
                     selectedFoodItems = selectedFoodItems,
                     optimizedDiet = optimizedDiet
                 )
@@ -85,6 +83,19 @@ class AddDietViewModel @Inject constructor(
             }.collect {
                 _uiState.value = it
             }
+        }
+    }
+
+    private fun Map<String, List<Food>>.filter(query: String): Map<String, List<Food>> {
+        val trimmedQuery = query.trim()
+        if (trimmedQuery.isBlank()) return this
+
+        return this.mapValues { (_, foods) ->
+            foods.filter { food ->
+                food.name.contains(trimmedQuery, ignoreCase = true)
+            }
+        }.filter { foods ->
+            foods.value.isNotEmpty()
         }
     }
 
@@ -102,6 +113,10 @@ class AddDietViewModel @Inject constructor(
         _selectedFoodItems.value = _selectedFoodItems.value.toMutableList().apply {
             remove(food)
         }
+    }
+
+    fun onSelectAllFoodItems(foodItems: List<Food>) {
+        _selectedFoodItems.value = foodItems
     }
 
     fun onResetSelectedFoodItems() {

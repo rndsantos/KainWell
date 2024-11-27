@@ -6,6 +6,7 @@ import com.example.kainwell.DietsEntity
 import com.example.kainwell.data.diet.SavedDietsRepository
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.data.food.FoodRepository
+import com.example.kainwell.domain.round
 import com.example.kainwell.domain.updateData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -47,34 +48,34 @@ class DietViewModel @Inject constructor(
 
     private fun DietsEntity.toDietList(foodItems: Map<String, Food>): List<Diet> {
         return dietsList.map { diet ->
-            var totalCalories = 0.0
-            var totalCholesterol = 0.0
-            var totalFat = 0.0
-            var totalSodium = 0.0
-            var totalCarbohydrates = 0.0
-            var totalFiber = 0.0
-            var totalProtein = 0.0
-            var totalVitA = 0.0
-            var totalVitC = 0.0
-            var totalCalcium = 0.0
-            var totalIron = 0.0
-            var totalCost = 0.0
+            var totalCalories = 0f
+            var totalCholesterol = 0f
+            var totalFat = 0f
+            var totalSodium = 0f
+            var totalCarbohydrates = 0f
+            var totalFiber = 0f
+            var totalProtein = 0f
+            var totalVitA = 0f
+            var totalVitC = 0f
+            var totalCalcium = 0f
+            var totalIron = 0f
+            var totalCost = 0f
 
             val foodItemsForDiet = diet.namesList.zip(diet.servingsList) { name, serving ->
                 val food = foodItems[name] ?: Food()
                 val updatedFood = food.updateData(serving)
 
-                totalCalories += updatedFood.calories.toDouble()
-                totalCholesterol += updatedFood.cholesterol.toDouble()
-                totalFat += updatedFood.fat.toDouble()
-                totalSodium += updatedFood.sodium.toDouble()
-                totalCarbohydrates += updatedFood.carbohydrates.toDouble()
-                totalFiber += updatedFood.fiber.toDouble()
-                totalProtein += updatedFood.protein.toDouble()
-                totalVitA += updatedFood.vitA.toDouble()
-                totalVitC += updatedFood.vitC.toDouble()
-                totalCalcium += updatedFood.calcium.toDouble()
-                totalIron += updatedFood.iron.toDouble()
+                totalCalories += updatedFood.calories
+                totalCholesterol += updatedFood.cholesterol
+                totalFat += updatedFood.fat
+                totalSodium += updatedFood.sodium
+                totalCarbohydrates += updatedFood.carbohydrates
+                totalFiber += updatedFood.fiber
+                totalProtein += updatedFood.protein
+                totalVitA += updatedFood.vitA
+                totalVitC += updatedFood.vitC
+                totalCalcium += updatedFood.calcium
+                totalIron += updatedFood.iron
                 totalCost += updatedFood.price
 
                 updatedFood
@@ -82,18 +83,18 @@ class DietViewModel @Inject constructor(
 
             Diet(
                 foodItems = foodItemsForDiet,
-                totalCalories = totalCalories.toFloat(),
-                totalCholesterol = totalCholesterol.toFloat(),
-                totalFat = totalFat.toFloat(),
-                totalSodium = totalSodium.toFloat(),
-                totalCarbohydrates = totalCarbohydrates.toFloat(),
-                totalFiber = totalFiber.toFloat(),
-                totalProtein = totalProtein.toFloat(),
-                totalVitA = totalVitA.toFloat(),
-                totalVitC = totalVitC.toFloat(),
-                totalCalcium = totalCalcium.toFloat(),
-                totalIron = totalIron.toFloat(),
-                totalCost = totalCost.toFloat()
+                totalCalories = totalCalories.round(),
+                totalCholesterol = totalCholesterol.round(),
+                totalFat = totalFat.round(),
+                totalSodium = totalSodium.round(),
+                totalCarbohydrates = totalCarbohydrates.round(),
+                totalFiber = totalFiber.round(),
+                totalProtein = totalProtein.round(),
+                totalVitA = totalVitA.round(),
+                totalVitC = totalVitC.round(),
+                totalCalcium = totalCalcium.round(),
+                totalIron = totalIron.round(),
+                totalCost = totalCost.round()
             )
         }
     }

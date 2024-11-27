@@ -204,7 +204,7 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
                 if (serving <= 0f) {
                     Food()
                 } else
-                    food.updateData(serving)
+                    food.updateData(serving.round())
             }.filter {
                 it.name.isNotEmpty()
             }
@@ -221,7 +221,7 @@ private fun multiplyServingSize(servingSize: String, serving: Float): String {
     return "$calculatedServingSize $servingUnit"
 }
 
-private fun Float.round(decimalPlace: Int = 2): Float {
+fun Float.round(decimalPlace: Int = 2): Float {
     val multiplier = 10f.pow(decimalPlace)
     return round(this * multiplier) / multiplier
 }

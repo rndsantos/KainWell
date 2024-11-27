@@ -57,7 +57,6 @@ fun ViewMealScreen(
     when (val state = uiState) {
         is AddDietUiState.Ready -> ViewMealScreenReady(
             selectedFoodItems = state.selectedFoodItems,
-            optimizedDiet = state.optimizedDiet,
             onNavigateToViewOptimizedDiet = onNavigateToViewOptimizedDiet,
             onAddSelectedFoodItem = viewModel::onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = viewModel::onRemoveSelectedFoodItem,
@@ -72,9 +71,8 @@ fun ViewMealScreen(
 }
 
 @Composable
-fun ViewMealScreenReady(
+private fun ViewMealScreenReady(
     selectedFoodItems: List<Food>,
-    optimizedDiet: List<Food>,
     onNavigateToViewOptimizedDiet: () -> Unit,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
@@ -122,7 +120,7 @@ fun ViewMealScreenReady(
 }
 
 @Composable
-fun ViewMealBottomAppBar(
+private fun ViewMealBottomAppBar(
     onOptimizeMeal: () -> Unit,
 ) {
     Surface(
@@ -151,7 +149,7 @@ fun ViewMealBottomAppBar(
 }
 
 @Composable
-fun ViewMealContent(
+private fun ViewMealContent(
     selectedFoodItems: List<Food>,
     onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
@@ -168,7 +166,7 @@ fun ViewMealContent(
 }
 
 @Composable
-fun FoodListItem(
+private fun FoodListItem(
     food: Food,
     onRemoveSelectedFoodItem: (Food) -> Unit,
 ) {

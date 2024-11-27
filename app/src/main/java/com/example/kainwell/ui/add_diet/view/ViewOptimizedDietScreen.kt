@@ -69,7 +69,7 @@ fun ViewOptimizedDietScreen(
 }
 
 @Composable
-fun ViewOptimizedDietScreenReady(
+private fun ViewOptimizedDietScreenReady(
     optimizedDiet: List<Food>,
     onAddDiet: () -> Unit,
     onNavigateToHome: () -> Unit,
@@ -112,7 +112,7 @@ fun ViewOptimizedDietScreenReady(
 }
 
 @Composable
-fun ViewOptimizedDietBottomAppBar(
+private fun ViewOptimizedDietBottomAppBar(
     onAddDiet: () -> Unit,
 ) {
     Surface(
@@ -141,7 +141,7 @@ fun ViewOptimizedDietBottomAppBar(
 }
 
 @Composable
-fun ViewOptimizedDietContent(
+private fun ViewOptimizedDietContent(
     optimizedDiet: List<Food>,
     innerPadding: PaddingValues,
 ) {
@@ -156,7 +156,7 @@ fun ViewOptimizedDietContent(
 }
 
 @Composable
-fun FoodListItem(
+private fun FoodListItem(
     food: Food,
     modifier: Modifier = Modifier,
 ) {

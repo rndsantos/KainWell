@@ -1,20 +1,35 @@
+@file:OptIn(ExperimentalLayoutApi::class)
+
 package com.example.kainwell.ui.common.composable
 
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -27,17 +42,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.composables.core.DragIndication
+import com.composables.core.ModalBottomSheet
+import com.composables.core.ModalBottomSheetState
+import com.composables.core.Scrim
+import com.composables.core.Sheet
 import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
+import com.example.kainwell.ui.Dimensions.ExtraLargePadding
+import com.example.kainwell.ui.Dimensions.LargePadding
+import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.utils.isDarkMode
 
@@ -158,7 +185,7 @@ fun FoodItemCard(
                         Icon(
                             painter = painterResource(R.drawable.ic_calories),
                             contentDescription = "protein",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
                     }
@@ -204,6 +231,214 @@ fun FoodItemCard(
     }
 }
 
+@Composable
+fun FoodDetailBottomSheet(
+    food: Food,
+    sheetState: ModalBottomSheetState,
+    onClick: () -> Unit,
+    onDismiss: () -> Unit,
+    selected: Boolean? = null,
+) {
+    ModalBottomSheet(
+        state = sheetState,
+        onDismiss = onDismiss
+    ) {
+        Scrim()
+        Sheet(
+            modifier = Modifier
+                .shadow(4.dp, MaterialTheme.shapes.medium)
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surface)
+                .fillMaxWidth()
+        ) {
+            Box(
+                contentAlignment = Alignment.TopCenter,
+                modifier = Modifier
+                    .fillMaxHeight(0.8f)
+                    .verticalScroll(
+                        rememberScrollState()
+                    )
+            ) {
+                DragIndication(
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .background(
+                            MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(100)
+                        )
+                        .width(48.dp)
+                        .height(4.dp)
+                        .zIndex(1f)
+                )
+                Column {
+                    FoodImage(
+                        imageUrl = food.img,
+                        contentDescription = food.name,
+                        modifier = Modifier
+                            .aspectRatio(1.67f)
+                            .heightIn(250.dp)
+                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(MediumPadding)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column {
+                                Text(
+                                    text = food.name,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Black
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "$${food.price}",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                            Text(
+                                text = food.servingSize,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        Spacer(Modifier.height(SmallPadding))
+                        NutritionalValuesGrid(food)
+                    }
+                }
+
+                selected?.let {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowElevation = 8.dp,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(SmallPadding),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(MediumPadding)
+                                .navigationBarsPadding()
+                        ) {
+                            KainWellButton(
+                                onClick = onClick,
+                                containerColor = MaterialTheme.colorScheme.inverseSurface,
+                                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                                contentPadding = PaddingValues(
+                                    horizontal = ExtraLargePadding,
+                                    vertical = SmallPadding
+                                ),
+                                shape = MaterialTheme.shapes.small,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (selected) "Remove from meal" else "Add to meal",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun NutritionalValuesGrid(food: Food) {
+    data class Nutrient(val name: String, val value: String, val useWeight: Boolean = true)
+
+    val nutrients = listOf(
+        Nutrient("Fiber", "${food.fiber} g"),
+        Nutrient("Sodium", "${food.sodium} mg", useWeight = false),
+        Nutrient("Vit A", "${food.vitA} IU", useWeight = false),
+        Nutrient("Vit C", "${food.vitC} IU"),
+        Nutrient("Calcium", "${food.calcium} mg"),
+        Nutrient("Iron", "${food.iron} mg"),
+        Nutrient("Cholesterol", "${food.cholesterol} mg")
+    )
+    val macros = listOf(
+        Nutrient("Calories", "${food.calories}", useWeight = false),
+        Nutrient("Protein", "${food.protein} g", useWeight = false),
+        Nutrient("Carbs", "${food.carbohydrates} g"),
+        Nutrient("Fat", "${food.fat} g"),
+    )
+    val macroColors = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.error,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.tertiary
+    )
+
+    FlowRow(
+        maxItemsInEachRow = 4,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier
+            .padding(horizontal = SmallPadding, vertical = MediumPadding)
+            .fillMaxWidth()
+    ) {
+        macros.zip(macroColors) { nutrient, color ->
+            NutrientCard(
+                name = nutrient.name,
+                value = nutrient.value,
+                color = color,
+                modifier = Modifier.then(
+                    if (nutrient.useWeight) Modifier.weight(1f) else Modifier
+                )
+            )
+        }
+
+        nutrients.map { nutrient ->
+            NutrientCard(
+                name = nutrient.name,
+                value = nutrient.value,
+                modifier = Modifier.then(
+                    if (nutrient.useWeight) Modifier.weight(1f) else Modifier
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun NutrientCard(
+    name: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primaryContainer,
+) {
+    Surface(
+        color = color,
+        shadowElevation = 1.dp,
+        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(MediumPadding)
+
+        ) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(LargePadding))
+            Text(text = value, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
 
 @Composable
 fun MacronutrientValue(
@@ -220,7 +455,8 @@ fun MacronutrientValue(
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
         )
     }
 }

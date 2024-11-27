@@ -15,7 +15,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -85,8 +87,9 @@ fun KainWellApp() {
                     }
 
                     navigation<AddDiet>(startDestination = PickFoodItems) {
-                        composable<PickFoodItems> { backStackEntry ->
+                        composableWithCompositionLocal<PickFoodItems> { backStackEntry ->
                             AddDietScreen(
+                                onBack = { kainWellNavController.navController.popBackStack() },
                                 navigateToViewMeal = {
                                     kainWellNavController.navigate(
                                         route = ViewMeal,
@@ -97,11 +100,17 @@ fun KainWellApp() {
                         }
 
                         composable<ViewMeal>(
-                            popEnterTransition = {
-                                slideInHorizontally()
+                            enterTransition = {
+                                slideInVertically { it / 3 }
                             },
                             exitTransition = {
-                                slideOutHorizontally()
+                                slideOutHorizontally { -it / 3 }
+                            },
+                            popEnterTransition = {
+                                slideInHorizontally { -it / 3 }
+                            },
+                            popExitTransition = {
+                                slideOutVertically { it / 3 }
                             }
                         ) { backStackEntry ->
                             val viewModel =
@@ -126,10 +135,10 @@ fun KainWellApp() {
 
                         composable<ViewOptimizedDiet>(
                             enterTransition = {
-                                slideInHorizontally()
+                                slideInHorizontally { it / 3 }
                             },
                             popExitTransition = {
-                                slideOutHorizontally()
+                                slideOutHorizontally { it / 3 }
                             }
                         ) { backStackEntry ->
                             val viewModel =

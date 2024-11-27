@@ -1,6 +1,7 @@
 package com.example.kainwell.ui.home.diet
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,17 +16,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,12 +38,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.composables.core.SheetDetent.Companion.FullyExpanded
+import com.composables.core.SheetDetent.Companion.Hidden
+import com.composables.core.rememberModalBottomSheetState
 import com.example.kainwell.R
+import com.example.kainwell.data.food.Food
 import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.common.composable.ErrorScreen
+import com.example.kainwell.ui.common.composable.FoodDetailBottomSheet
 import com.example.kainwell.ui.common.composable.FoodImage
 import com.example.kainwell.ui.common.composable.LoadingScreen
 import com.example.kainwell.ui.common.composable.MacronutrientValue
@@ -70,11 +79,16 @@ fun DietScreenReady(
     savedDiets: List<Diet>,
     modifier: Modifier = Modifier,
 ) {
+    val sheetState = rememberModalBottomSheetState(initialDetent = Hidden)
+    var selectedFood by remember {
+        mutableStateOf(Food())
+    }
+
     Column(
         modifier.padding(MediumPadding)
     ) {
         Text(
-            text = "Saved Diets", style = MaterialTheme.typography.headlineSmall.copy(
+            text = "Saved Diets", style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Black
             )
         )
@@ -91,17 +105,33 @@ fun DietScreenReady(
                 verticalArrangement = Arrangement.spacedBy(MediumPadding),
                 contentPadding = PaddingValues(SmallPadding)
             ) {
-                items(savedDiets) { diet ->
-                    DietListItem(diet = diet, modifier = Modifier.fillMaxWidth())
+                itemsIndexed(savedDiets) { index, diet ->
+                    DietListItem(diet = diet, title = "Diet #${index + 1}", onFoodClick = { food ->
+                        selectedFood = food
+                        sheetState.currentDetent = FullyExpanded
+                    }, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
     }
+
+    FoodDetailBottomSheet(
+        food = selectedFood,
+        sheetState = sheetState,
+        onClick = {
+            sheetState.currentDetent = Hidden
+        },
+        onDismiss = {
+            sheetState.currentDetent = Hidden
+        }
+    )
 }
 
 @Composable
 fun DietListItem(
     diet: Diet,
+    title: String,
+    onFoodClick: (Food) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(
@@ -117,8 +147,9 @@ fun DietListItem(
         modifier = modifier
     ) {
         Box {
-            Badge(
-                containerColor = MaterialTheme.colorScheme.inverseSurface,
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.inverseSurface,
                 modifier = Modifier
                     .padding(SmallPadding)
                     .align(Alignment.TopEnd)
@@ -131,14 +162,13 @@ fun DietListItem(
                     modifier = Modifier.padding(4.dp)
                 )
             }
-
             Column {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(SmallPadding),
                     modifier = Modifier
                         .padding(MediumPadding)
                 ) {
-                    Text(text = "Macronutrients", style = MaterialTheme.typography.titleMedium)
+                    Text(text = title, style = MaterialTheme.typography.titleMedium)
                     Row(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically,
@@ -149,7 +179,7 @@ fun DietListItem(
                             Icon(
                                 painter = painterResource(R.drawable.ic_calories),
                                 contentDescription = "protein",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
@@ -202,7 +232,11 @@ fun DietListItem(
 
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clickable {
+                                    onFoodClick(foodItem)
+                                }
                         ) {
                             FoodImage(
                                 imageUrl = foodItem.img,
@@ -223,7 +257,9 @@ fun DietListItem(
                                 )
                                 Text(
                                     text = foodItem.servingSize,
-                                    style = MaterialTheme.typography.bodySmall,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 10.sp
+                                    ),
                                     color = Color.White
                                 )
                             }
