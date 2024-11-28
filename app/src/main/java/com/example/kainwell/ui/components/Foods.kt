@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalLayoutApi::class)
 
-package com.example.kainwell.ui.common.composable
+package com.example.kainwell.ui.components
 
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -63,7 +61,6 @@ import com.composables.core.Sheet
 import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.ui.Dimensions.ExtraLargePadding
-import com.example.kainwell.ui.Dimensions.LargePadding
 import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.utils.isDarkMode
@@ -251,72 +248,73 @@ fun FoodDetailBottomSheet(
                 .background(MaterialTheme.colorScheme.surface)
                 .fillMaxWidth()
         ) {
-            Box(
-                contentAlignment = Alignment.TopCenter,
-                modifier = Modifier
-                    .fillMaxHeight(0.8f)
-                    .verticalScroll(
-                        rememberScrollState()
-                    )
-            ) {
-                DragIndication(
+            Column {
+                Box(
+                    contentAlignment = Alignment.TopCenter,
                     modifier = Modifier
-                        .padding(top = 12.dp)
-                        .background(
-                            MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(100)
+                        .verticalScroll(
+                            rememberScrollState()
                         )
-                        .width(48.dp)
-                        .height(4.dp)
-                        .zIndex(1f)
-                )
-                Column {
-                    FoodImage(
-                        imageUrl = food.img,
-                        contentDescription = food.name,
+                        .then(if (selected == null) Modifier.navigationBarsPadding() else Modifier)
+                ) {
+                    DragIndication(
                         modifier = Modifier
-                            .aspectRatio(1.67f)
-                            .heightIn(250.dp)
+                            .padding(top = 12.dp)
+                            .background(
+                                MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(100)
+                            )
+                            .width(48.dp)
+                            .height(4.dp)
+                            .zIndex(1f)
                     )
-                    Column(
-                        modifier = Modifier
-                            .padding(MediumPadding)
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
+                    Column {
+                        FoodImage(
+                            imageUrl = food.img,
+                            contentDescription = food.name,
+                            modifier = Modifier
+                                .aspectRatio(1.67f)
+                                .heightIn(250.dp)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(MediumPadding)
                         ) {
-                            Column {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column {
+                                    Text(
+                                        text = food.name,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Black
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = "$${food.price}",
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
                                 Text(
-                                    text = food.name,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Black
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = "$${food.price}",
-                                    style = MaterialTheme.typography.titleSmall
+                                    text = food.servingSize,
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                             }
-                            Text(
-                                text = food.servingSize,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            Spacer(Modifier.height(SmallPadding))
+                            NutritionalValuesGrid(food)
                         }
-                        Spacer(Modifier.height(SmallPadding))
-                        NutritionalValuesGrid(food)
                     }
-                }
 
+                }
                 selected?.let {
                     Surface(
                         color = MaterialTheme.colorScheme.surface,
                         shadowElevation = 8.dp,
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.align(Alignment.BottomStart)
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(SmallPadding),
@@ -332,14 +330,16 @@ fun FoodDetailBottomSheet(
                                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
                                 contentPadding = PaddingValues(
                                     horizontal = ExtraLargePadding,
-                                    vertical = SmallPadding
+                                    vertical = MediumPadding
                                 ),
                                 shape = MaterialTheme.shapes.small,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
                                     text = if (selected) "Remove from meal" else "Add to meal",
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Black
+                                    )
                                 )
                             }
                         }
@@ -356,16 +356,16 @@ fun NutritionalValuesGrid(food: Food) {
 
     val nutrients = listOf(
         Nutrient("Fiber", "${food.fiber} g"),
-        Nutrient("Sodium", "${food.sodium} mg", useWeight = false),
-        Nutrient("Vit A", "${food.vitA} IU", useWeight = false),
+        Nutrient("Sodium", "${food.sodium} mg"),
+        Nutrient("Vit A", "${food.vitA} IU"),
         Nutrient("Vit C", "${food.vitC} IU"),
         Nutrient("Calcium", "${food.calcium} mg"),
         Nutrient("Iron", "${food.iron} mg"),
         Nutrient("Cholesterol", "${food.cholesterol} mg")
     )
     val macros = listOf(
-        Nutrient("Calories", "${food.calories}", useWeight = false),
-        Nutrient("Protein", "${food.protein} g", useWeight = false),
+        Nutrient("Calories", "${food.calories}"),
+        Nutrient("Protein", "${food.protein} g"),
         Nutrient("Carbs", "${food.carbohydrates} g"),
         Nutrient("Fat", "${food.fat} g"),
     )
@@ -381,14 +381,19 @@ fun NutritionalValuesGrid(food: Food) {
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
-            .padding(horizontal = SmallPadding, vertical = MediumPadding)
             .fillMaxWidth()
+            .padding(vertical = MediumPadding)
     ) {
         macros.zip(macroColors) { nutrient, color ->
             NutrientCard(
                 name = nutrient.name,
                 value = nutrient.value,
-                color = color,
+                badge = {
+                    Badge(
+                        containerColor = color,
+                        modifier = Modifier.zIndex(1f)
+                    )
+                },
                 modifier = Modifier.then(
                     if (nutrient.useWeight) Modifier.weight(1f) else Modifier
                 )
@@ -399,9 +404,10 @@ fun NutritionalValuesGrid(food: Food) {
             NutrientCard(
                 name = nutrient.name,
                 value = nutrient.value,
-                modifier = Modifier.then(
-                    if (nutrient.useWeight) Modifier.weight(1f) else Modifier
-                )
+                modifier = Modifier
+                    .then(
+                        if (nutrient.useWeight) Modifier.weight(1f) else Modifier
+                    )
             )
         }
     }
@@ -412,14 +418,18 @@ private fun NutrientCard(
     name: String,
     value: String,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primaryContainer,
+    badge: @Composable (() -> Unit)? = null,
 ) {
     Surface(
-        color = color,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 1.dp,
         shape = MaterialTheme.shapes.extraLarge,
         modifier = modifier
     ) {
+        if (badge != null) {
+            badge()
+        }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -428,15 +438,15 @@ private fun NutrientCard(
         ) {
             Text(
                 text = name,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Black
                 ),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(LargePadding))
-            Text(text = value, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(MediumPadding))
+            Text(text = value, style = MaterialTheme.typography.bodySmall, maxLines = 1)
         }
+
     }
 }
 

@@ -40,6 +40,7 @@ import com.example.kainwell.ui.add_diet.view.ViewOptimizedDietScreen
 import com.example.kainwell.ui.home.Diet
 import com.example.kainwell.ui.home.KainWellBottomBar
 import com.example.kainwell.ui.home.addHomeGraph
+import com.example.kainwell.ui.home.welcome.WelcomeScreen
 import com.example.kainwell.ui.navigation.rememberKainWellNavController
 import com.example.kainwell.ui.theme.KainWellTheme
 import kotlinx.serialization.Serializable
@@ -60,12 +61,14 @@ object ViewMeal
 @Serializable
 object ViewOptimizedDiet
 
+@Serializable
+object Welcome
+
 @SuppressLint("RestrictedApi")
 @Composable
 fun KainWellApp() {
     KainWellTheme {
         val kainWellNavController = rememberKainWellNavController()
-        val durationMillis = 300
 
         SharedTransitionLayout {
             CompositionLocalProvider(
@@ -73,8 +76,19 @@ fun KainWellApp() {
             ) {
                 NavHost(
                     navController = kainWellNavController.navController,
-                    startDestination = Home
+                    startDestination = Welcome
                 ) {
+                    composable<Welcome> { backStackEntry ->
+                        WelcomeScreen(
+                            navigateToDietScreen = {
+                                kainWellNavController.navigate(
+                                    route = Home,
+                                    from = backStackEntry
+                                )
+                            },
+                        )
+                    }
+
                     composableWithCompositionLocal<Home> { backStackEntry ->
                         MainContainer(
                             navigateToAddDiet = {
@@ -234,11 +248,6 @@ inline fun <reified T : Any> NavGraphBuilder.composableWithCompositionLocal(
         }
     }
 }
-
-fun <T> spatialExpressiveSpring() = spring<T>(
-    dampingRatio = 0.8f,
-    stiffness = 380f
-)
 
 fun <T> nonSpatialExpressiveSpring() = spring<T>(
     dampingRatio = 1f,

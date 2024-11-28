@@ -23,6 +23,15 @@ class NutritionalIntakesRepositoryImpl @Inject constructor(
             }
             .firstOrNull() ?: NutritionalIntakesEntity.getDefaultInstance()
 
+    override suspend fun isEmpty(): Boolean =
+        getNutritionalIntakes() == NutritionalIntakesEntity.getDefaultInstance()
+
+    override suspend fun clearNutritionalIntakes() {
+        nutritionalIntakeDataStore.updateData {
+            NutritionalIntakesEntity.getDefaultInstance()
+        }
+    }
+
     override suspend fun setMinimumNutritionalIntake(nutrient: NutrientEntity) {
         nutritionalIntakeDataStore.updateData {
             it.toBuilder().setMinimum(nutrient).build()
@@ -34,18 +43,4 @@ class NutritionalIntakesRepositoryImpl @Inject constructor(
             it.toBuilder().setMaximum(nutrient).build()
         }
     }
-
-    //    private companion object {
-//        val CALORIES = stringPreferencesKey("calories")
-//        val CHOLESTEROL = stringPreferencesKey("cholesterol")
-//        val FAT = stringPreferencesKey("fat")
-//        val SODIUM = stringPreferencesKey("sodium")
-//        val CARBOHYDRATES = stringPreferencesKey("carbohydrates")
-//        val FIBER = stringPreferencesKey("fiber")
-//        val PROTEIN = stringPreferencesKey("protein")
-//        val VIT_A = stringPreferencesKey("vit_a")
-//        val VIT_C = stringPreferencesKey("vit_c")
-//        val CALCIUM = stringPreferencesKey("calcium")
-//        val IRON = stringPreferencesKey("iron")
-//    }
 }

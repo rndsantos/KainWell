@@ -23,9 +23,9 @@ import com.composables.core.SheetDetent.Companion.FullyExpanded
 import com.composables.core.SheetDetent.Companion.Hidden
 import com.composables.core.rememberModalBottomSheetState
 import com.example.kainwell.data.food.Food
-import com.example.kainwell.ui.common.composable.ErrorScreen
-import com.example.kainwell.ui.common.composable.FoodDetailBottomSheet
-import com.example.kainwell.ui.common.composable.LoadingScreen
+import com.example.kainwell.ui.components.ErrorScreen
+import com.example.kainwell.ui.components.FoodDetailBottomSheet
+import com.example.kainwell.ui.components.LoadingScreen
 
 @Composable
 fun GalleryScreen(
@@ -33,9 +33,9 @@ fun GalleryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val state = uiState) {
-        is HomeScreenUiState.Loading -> LoadingScreen()
-        is HomeScreenUiState.Error -> ErrorScreen(state.errorMessage)
-        is HomeScreenUiState.Ready -> GalleryScreenReady(state.foodItems)
+        is GalleryUiState.Loading -> LoadingScreen()
+        is GalleryUiState.Error -> ErrorScreen(state.errorMessage)
+        is GalleryUiState.Ready -> GalleryScreenReady(state.foodItems)
     }
 }
 

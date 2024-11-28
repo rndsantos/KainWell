@@ -48,11 +48,11 @@ import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
-import com.example.kainwell.ui.common.composable.ErrorScreen
-import com.example.kainwell.ui.common.composable.FoodDetailBottomSheet
-import com.example.kainwell.ui.common.composable.FoodImage
-import com.example.kainwell.ui.common.composable.LoadingScreen
-import com.example.kainwell.ui.common.composable.MacronutrientValue
+import com.example.kainwell.ui.components.ErrorScreen
+import com.example.kainwell.ui.components.FoodDetailBottomSheet
+import com.example.kainwell.ui.components.FoodImage
+import com.example.kainwell.ui.components.LoadingScreen
+import com.example.kainwell.ui.components.MacronutrientValue
 import com.example.kainwell.ui.utils.isDarkMode
 
 @Composable

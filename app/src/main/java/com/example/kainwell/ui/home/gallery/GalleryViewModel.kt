@@ -17,16 +17,16 @@ import javax.inject.Inject
 class GalleryViewModel @Inject constructor(
     private val foodRepository: FoodRepository,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<HomeScreenUiState>(HomeScreenUiState.Loading)
+    private val _uiState = MutableStateFlow<GalleryUiState>(GalleryUiState.Loading)
 
     val uiState = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
             foodRepository.getAllFoodItems().map {
-                HomeScreenUiState.Ready(it)
+                GalleryUiState.Ready(it)
             }.catch { throwable ->
-                HomeScreenUiState.Error(throwable.message ?: "Unknown error")
+                GalleryUiState.Error(throwable.message ?: "Unknown error")
             }.collect {
                 _uiState.value = it
             }

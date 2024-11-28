@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,16 +34,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
-import com.example.kainwell.ui.Dimensions.LargePadding
 import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.add_diet.AddDietUiState
 import com.example.kainwell.ui.add_diet.AddDietViewModel
 import com.example.kainwell.ui.add_diet.SelectedFoodItemsCount
-import com.example.kainwell.ui.common.composable.FoodImage
-import com.example.kainwell.ui.common.composable.KainWellButton
-import com.example.kainwell.ui.common.composable.LoadingScreen
-import com.example.kainwell.ui.common.composable.MacronutrientValue
+import com.example.kainwell.ui.components.FoodImage
+import com.example.kainwell.ui.components.KainWellBottomAppBar
+import com.example.kainwell.ui.components.LoadingScreen
+import com.example.kainwell.ui.components.MacronutrientValue
 
 @Composable
 fun ViewMealScreen(
@@ -58,7 +55,6 @@ fun ViewMealScreen(
         is AddDietUiState.Ready -> ViewMealScreenReady(
             selectedFoodItems = state.selectedFoodItems,
             onNavigateToViewOptimizedDiet = onNavigateToViewOptimizedDiet,
-            onAddSelectedFoodItem = viewModel::onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = viewModel::onRemoveSelectedFoodItem,
             onOptimizeMeal = viewModel::onOptimizeMeal,
             onBack = onBack
@@ -74,7 +70,6 @@ fun ViewMealScreen(
 private fun ViewMealScreenReady(
     selectedFoodItems: List<Food>,
     onNavigateToViewOptimizedDiet: () -> Unit,
-    onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
     onOptimizeMeal: () -> Unit,
     onBack: () -> Unit,
@@ -102,56 +97,58 @@ private fun ViewMealScreenReady(
             )
         },
         bottomBar = {
-            ViewMealBottomAppBar(
-                onOptimizeMeal = {
-                    onOptimizeMeal()
-                    onNavigateToViewOptimizedDiet()
-                }
-            )
+            KainWellBottomAppBar(onClick = {
+                onOptimizeMeal()
+                onNavigateToViewOptimizedDiet()
+            }, contentPadding = PaddingValues(MediumPadding)) {
+                Text(
+                    text = "Optimize Diet",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Black
+                    ),
+                )
+            }
         },
     ) { innerPadding ->
         ViewMealContent(
             selectedFoodItems = selectedFoodItems.toList(),
-            onAddSelectedFoodItem = onAddSelectedFoodItem,
             onRemoveSelectedFoodItem = onRemoveSelectedFoodItem,
             innerPadding = innerPadding
         )
     }
 }
 
-@Composable
-private fun ViewMealBottomAppBar(
-    onOptimizeMeal: () -> Unit,
-) {
-    Surface(
-        shadowElevation = 5.dp,
-    ) {
-        KainWellButton(
-            onClick = onOptimizeMeal,
-            containerColor = MaterialTheme.colorScheme.inverseSurface,
-            shape = MaterialTheme.shapes.large.copy(
-                topStart = MaterialTheme.shapes.large.bottomStart,
-                topEnd = MaterialTheme.shapes.large.bottomEnd
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Optimize Diet",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = Modifier
-                    .padding(LargePadding)
-                    .navigationBarsPadding()
-            )
-        }
-    }
-}
+//@Composable
+//private fun ViewMealBottomAppBar(
+//    onOptimizeMeal: () -> Unit,
+//) {
+//    Surface(
+//        shadowElevation = 5.dp,
+//    ) {
+//        KainWellButton(
+//            onClick = onOptimizeMeal,
+//            containerColor = MaterialTheme.colorScheme.inverseSurface,
+//            shape = MaterialTheme.shapes.large.copy(
+//                topStart = MaterialTheme.shapes.large.bottomStart,
+//                topEnd = MaterialTheme.shapes.large.bottomEnd
+//            ),
+//            modifier = Modifier.fillMaxWidth()
+//        ) {
+//            Text(
+//                text = "Optimize Diet",
+//                style = MaterialTheme.typography.bodyMedium.copy(
+//                    fontWeight = FontWeight.Bold
+//                ),
+//                modifier = Modifier
+//                    .navigationBarsPadding()
+//            )
+//        }
+//    }
+//}
 
 @Composable
 private fun ViewMealContent(
     selectedFoodItems: List<Food>,
-    onAddSelectedFoodItem: (Food) -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
     innerPadding: PaddingValues,
 ) {
@@ -208,7 +205,7 @@ private fun FoodListItem(
                         Icon(
                             painter = painterResource(R.drawable.ic_calories),
                             contentDescription = "protein",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
                     }

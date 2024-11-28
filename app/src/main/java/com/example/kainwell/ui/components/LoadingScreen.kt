@@ -1,4 +1,4 @@
-package com.example.kainwell.ui.common.composable
+package com.example.kainwell.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

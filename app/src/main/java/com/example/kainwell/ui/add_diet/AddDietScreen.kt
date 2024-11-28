@@ -6,18 +6,14 @@
 package com.example.kainwell.ui.add_diet
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -25,6 +21,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeightIn
+import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -48,7 +46,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -66,7 +63,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,16 +75,17 @@ import com.composables.core.SheetDetent.Companion.Hidden
 import com.composables.core.rememberModalBottomSheetState
 import com.example.kainwell.R
 import com.example.kainwell.data.food.Food
-import com.example.kainwell.ui.Dimensions.ExtraLargePadding
 import com.example.kainwell.ui.Dimensions.LargePadding
 import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
-import com.example.kainwell.ui.common.composable.ErrorScreen
-import com.example.kainwell.ui.common.composable.FoodDetailBottomSheet
-import com.example.kainwell.ui.common.composable.FoodItemCard
-import com.example.kainwell.ui.common.composable.LoadingScreen
-import com.example.kainwell.ui.common.ext.titlecase
+import com.example.kainwell.ui.components.ErrorScreen
+import com.example.kainwell.ui.components.FoodDetailBottomSheet
+import com.example.kainwell.ui.components.FoodItemCard
+import com.example.kainwell.ui.components.KainWellBottomAppBar
+import com.example.kainwell.ui.components.LoadingScreen
+import com.example.kainwell.ui.components.VerticalGrid
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 
 @Composable
@@ -144,8 +141,11 @@ private fun AddDietScreenReady(
     Scaffold(
         topBar = {
             Column(
-                Modifier.statusBarsPadding()
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
+                    .statusBarsPadding()
             ) {
+                Spacer(modifier = Modifier.height(SmallPadding))
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -192,20 +192,16 @@ private fun AddDietScreenReady(
             }
         },
         bottomBar = {
-            AnimatedVisibility(
-                visible = selectedFoodItems.isNotEmpty(),
-                enter = slideInVertically {
-                    it
-                }, exit = slideOutVertically {
-                    it
-                }) {
-                AddDietBottomAppBar(
-                    selectedFoodItems = selectedFoodItems,
-                    onResetMeal = onResetSelectedFoodItems,
-                    onNavigateToViewMeal = {
-                        navigateToViewMeal()
-                    }
-                )
+            AnimatedVisibility(visible = selectedFoodItems.isNotEmpty()) {
+                KainWellBottomAppBar(
+                    onClick = navigateToViewMeal,
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    AddDietBottomAppBarContent(
+                        selectedFoodItems = selectedFoodItems,
+                        onResetMeal = onResetSelectedFoodItems
+                    )
+                }
             }
         },
     ) { innerPadding ->
@@ -225,8 +221,8 @@ private fun AddDietScreenReady(
         } else
             LazyColumn(
                 state = lazyListState,
+                contentPadding = innerPadding,
                 modifier = Modifier
-                    .padding(innerPadding)
                     .padding(horizontal = MediumPadding)
             ) {
                 items(
@@ -291,93 +287,52 @@ fun SelectedFoodItemsCount(
 }
 
 @Composable
-private fun AddDietBottomAppBar(
+private fun AddDietBottomAppBarContent(
     selectedFoodItems: List<Food>,
     onResetMeal: () -> Unit,
-    onNavigateToViewMeal: () -> Unit,
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.large,
-        shadowElevation = 5.dp,
-        modifier = Modifier
-            .height(95.dp)
-    ) {
-        ViewMealButton(
-            selectedFoodItems = selectedFoodItems,
-            onResetMeal = onResetMeal,
-            onNavigateToViewMeal = onNavigateToViewMeal,
-        )
-    }
-}
-
-@Composable
-private fun ViewMealButton(
-    selectedFoodItems: List<Food>,
-    onResetMeal: () -> Unit,
-    onNavigateToViewMeal: () -> Unit,
-) {
-    val interactionSource = remember {
-        MutableInteractionSource()
-    }
-
-    Surface(
-        color = MaterialTheme.colorScheme.inverseSurface,
-        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-        shape = MaterialTheme.shapes.small,
-        modifier = Modifier
-            .padding(
-                start = MediumPadding,
-                end = MediumPadding,
-                bottom = ExtraLargePadding,
-                top = MediumPadding
-            )
-            .clickable(
-                onClick = onNavigateToViewMeal,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null
-            )
-            .indication(interactionSource, ripple())
-
-    ) {
-        Box {
-            SelectedFoodItemsCount(selectedFoodItems.size)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
+    Box {
+        SelectedFoodItemsCount(selectedFoodItems.size)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = SmallPadding, horizontal = MediumPadding)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = SmallPadding, horizontal = MediumPadding)
+                    .requiredHeightIn(max = 45.dp)
+                    .requiredWidthIn(max = 200.dp)
+                    .weight(1f)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.width(200.dp)
-                ) {
-                    Text(
-                        text = "View your meal",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Bold
-                        )
+                Text(
+                    text = "View your meal",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = selectedFoodItems.joinToString { it.name },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.7f),
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                )
+                Text(
+                    text = selectedFoodItems.joinToString { it.name },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.7f),
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            IconButton(
-                onClick = onResetMeal, modifier = Modifier
-                    .padding(12.dp)
-                    .size(25.dp)
-                    .aspectRatio(1f)
-                    .align(Alignment.BottomEnd)
-            ) {
-                Icon(imageVector = Icons.Outlined.Clear, contentDescription = "clear meal")
-            }
+        }
+        IconButton(
+            onClick = onResetMeal, modifier = Modifier
+                .padding(12.dp)
+                .size(25.dp)
+                .aspectRatio(1f)
+                .align(Alignment.BottomEnd)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Clear,
+                contentDescription = "clear meal"
+            )
         }
     }
 }
@@ -523,14 +478,13 @@ private fun FoodItemCategory(
                 fontWeight = FontWeight.Bold
             ),
         )
-        FlowRow(
-            maxItemsInEachRow = 2,
-            horizontalArrangement = Arrangement.spacedBy(MediumPadding),
-            verticalArrangement = Arrangement.spacedBy(MediumPadding),
+        VerticalGrid(
+            horizontalSpacing = SmallPadding,
+            verticalSpacing = SmallPadding,
             modifier = Modifier
                 .padding(vertical = MediumPadding)
         ) {
-            foodItems.map { foodItem ->
+            foodItems.forEach { foodItem ->
                 FoodItemCard(
                     food = foodItem,
                     selected = selectedFoodItems.contains(foodItem),
@@ -543,14 +497,14 @@ private fun FoodItemCategory(
                     onRemoveFoodItem = {
                         onRemoveSelectedFoodItem(foodItem)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth(0.4785f)
                 )
             }
         }
     }
 }
 
-
+private fun String.titlecase(): String {
+    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+}
 
 

@@ -1,4 +1,4 @@
-package com.example.kainwell.ui.common.composable
+package com.example.kainwell.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,7 +17,6 @@ import com.example.kainwell.ui.Dimensions.SmallPadding
 @Composable
 fun ErrorScreen(
     errorMessage: String,
-    onRetry: () -> Unit = {},
 ) {
     Surface {
         Column(

@@ -43,8 +43,6 @@ fun NavGraphBuilder.addHomeGraph(
     composable<Gallery> {
         GalleryScreen()
     }
-
-    // add screen
 }
 
 @Composable
