@@ -9,6 +9,7 @@ import com.example.kainwell.data.food.FoodRepository
 import com.example.kainwell.domain.OptimizeSelectedFoodItemsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -19,7 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddDietViewModel @Inject constructor(
-    foodRepository: FoodRepository,
+    private val foodRepository: FoodRepository,
     private val savedDietsRepository: SavedDietsRepository,
     private val optimizeSelectedFoodItemsUseCase: OptimizeSelectedFoodItemsUseCase,
 ) : ViewModel() {
@@ -31,17 +32,21 @@ class AddDietViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
+        loadData()
+    }
+
+    fun loadData() {
         viewModelScope.launch(Dispatchers.IO) {
             combine(
                 foodRepository.getCategorizedFoodItems(),
                 _query,
                 _selectedFoodItems,
-                _optimizedDiet
+                _optimizedDiet,
             ) { foodItems, query, selectedFoodItems, optimizedDiet ->
                 AddDietUiState.Ready(
                     foodItems = foodItems.filter(query),
                     selectedFoodItems = selectedFoodItems,
-                    optimizedDiet = optimizedDiet
+                    optimizedDiet = optimizedDiet,
                 )
             }.catch { throwable ->
                 AddDietUiState.Error(throwable.message ?: "Unknown error")
@@ -49,6 +54,10 @@ class AddDietViewModel @Inject constructor(
                 _uiState.value = it
             }
         }
+    }
+
+    fun onErrorBack() {
+        loadData()
     }
 
     private fun Map<String, List<Food>>.filter(query: String): Map<String, List<Food>> {
@@ -99,13 +108,18 @@ class AddDietViewModel @Inject constructor(
         }
     }
 
-    fun onOptimizeMeal() {
-        _optimizedDiet.value = emptyList()
-        _uiState.value = AddDietUiState.Loading
+    suspend fun onOptimizeMeal(): Boolean {
+        return viewModelScope.async(Dispatchers.IO) {
+            _optimizedDiet.value = optimizeSelectedFoodItemsUseCase(_selectedFoodItems.value)
 
-        viewModelScope.launch(Dispatchers.IO) {
-            _optimizedDiet.value =
-                optimizeSelectedFoodItemsUseCase(_selectedFoodItems.value)
-        }
+            if (_optimizedDiet.value.isEmpty()) {
+                _uiState.value = AddDietUiState.Error(
+                    "No diet found for selected food items.\nConsider adding more food items to your diet."
+                )
+                false
+            } else {
+                true
+            }
+        }.await()
     }
 }

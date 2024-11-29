@@ -134,7 +134,7 @@ fun KainWellApp() {
                                     )
                                 )
                             ViewMealScreen(
-                                onNavigateToViewOptimizedDiet = {
+                                navigateToViewOptimizedDiet = {
                                     kainWellNavController.navigate(
                                         route = ViewOptimizedDiet,
                                         from = backStackEntry

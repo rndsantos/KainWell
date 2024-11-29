@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,7 +33,7 @@ class DietViewModel @Inject constructor(
                 foodRepository.getAllFoodItems(),
                 savedDietsRepository.savedDietsFlow(),
             ) { foodItems, savedDiets ->
-                DietUiState.Success(
+                DietUiState.Ready(
                     savedDiets = savedDiets.toDietList(foodItems.associateBy { it.name })
                 )
             }.catch { throwable ->
@@ -43,6 +44,15 @@ class DietViewModel @Inject constructor(
             }.collect {
                 _uiState.value = it
             }
+        }
+    }
+
+    fun onBack() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.value = DietUiState.Ready(
+                savedDiets = savedDietsRepository.savedDietsFlow().first()
+                    .toDietList(foodRepository.getAllFoodItems().first().associateBy { it.name })
+            )
         }
     }
 

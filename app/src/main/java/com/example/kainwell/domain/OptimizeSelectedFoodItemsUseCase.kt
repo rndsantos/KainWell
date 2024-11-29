@@ -16,7 +16,27 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
         val finalTableau: Array<FloatArray>,
         val basicSolution: FloatArray,
         val optimizedValue: Float,
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Solution
+
+            if (!finalTableau.contentDeepEquals(other.finalTableau)) return false
+            if (!basicSolution.contentEquals(other.basicSolution)) return false
+            if (optimizedValue != other.optimizedValue) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = finalTableau.contentDeepHashCode()
+            result = 31 * result + basicSolution.contentHashCode()
+            result = 31 * result + optimizedValue.hashCode()
+            return result
+        }
+    }
 
     private class Simplex(
         private var tableau: Array<FloatArray>,
@@ -106,9 +126,7 @@ class OptimizeSelectedFoodItemsUseCase @Inject constructor(
         }
     }
 
-    /**
-     * Extracts the food servings from the solution's basic solution.
-     */
+    // extracts the food servings from the solution's basic solution.
     private fun Solution.parseSolution(selectedFoodItemsSize: Int): FloatArray {
         val servings = FloatArray(selectedFoodItemsSize)
 
@@ -228,7 +246,7 @@ fun Float.round(decimalPlace: Int = 2): Float {
 
 fun Food.updateData(serving: Float): Food {
     return this.copy(
-        serving = serving,
+        serving = serving.round(),
         servingSize = multiplyServingSize(servingSize, serving),
         calories = (calories * serving).round(),
         cholesterol = (cholesterol * serving).round(),

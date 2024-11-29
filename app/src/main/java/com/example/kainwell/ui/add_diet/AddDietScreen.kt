@@ -47,12 +47,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -97,7 +99,7 @@ fun AddDietScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val state = uiState) {
         is AddDietUiState.Loading -> LoadingScreen()
-        is AddDietUiState.Error -> ErrorScreen(state.errorMessage)
+        is AddDietUiState.Error -> ErrorScreen(state.errorMessage, onBack = onBack)
         is AddDietUiState.Ready -> AddDietScreenReady(
             foodItems = state.foodItems,
             selectedFoodItems = state.selectedFoodItems,
@@ -136,6 +138,13 @@ private fun AddDietScreenReady(
     }
     var selectedFood by remember {
         mutableStateOf(Food())
+    }
+
+    LaunchedEffect(lazyListState) {
+        snapshotFlow { lazyListState.firstVisibleItemIndex }
+            .collect {
+                selectedCategory = it
+            }
     }
 
     Scaffold(
@@ -361,26 +370,28 @@ private fun CategoryList(
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.Bold
                     ),
-                    modifier = Modifier.then(
-                        if (index == selectedCategoryIndex) Modifier.bottomBorder(
-                            2.dp,
-                            MaterialTheme.colorScheme.inverseSurface
-                        ) else Modifier
-                    )
+                    modifier = Modifier
+                        .then(
+                            if (index == selectedCategoryIndex) Modifier.bottomBorder(
+                                2.dp,
+                                MaterialTheme.colorScheme.inverseSurface,
+                                SmallPadding
+                            ) else Modifier
+                        )
                 )
             }
         }
     }
 }
 
-private fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
+private fun Modifier.bottomBorder(strokeWidth: Dp, color: Color, space: Dp) = composed(
     factory = {
         val density = LocalDensity.current
         val strokeWidthPx = density.run { strokeWidth.toPx() }
 
         Modifier.drawBehind {
             val width = size.width
-            val height = size.height + SmallPadding.toPx() - strokeWidthPx / 2
+            val height = size.height + space.toPx() - strokeWidthPx / 2
 
             drawLine(
                 color = color,

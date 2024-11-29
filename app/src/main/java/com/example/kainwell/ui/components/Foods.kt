@@ -39,6 +39,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -299,10 +303,30 @@ fun FoodDetailBottomSheet(
                                         style = MaterialTheme.typography.titleSmall
                                     )
                                 }
-                                Text(
-                                    text = food.servingSize,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
+                                Spacer(Modifier.width(MediumPadding))
+                                var servingClicked by remember {
+                                    mutableStateOf(false)
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .clickable {
+                                            servingClicked = !servingClicked
+                                        }
+                                ) {
+                                    Text(
+                                        text = food.servingSize,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                    )
+                                    androidx.compose.animation.AnimatedVisibility(visible = servingClicked) {
+                                        Text(
+                                            text = " (${food.serving} serving/s)",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            overflow = TextOverflow.Ellipsis,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
                             }
                             Spacer(Modifier.height(SmallPadding))
                             NutritionalValuesGrid(food)

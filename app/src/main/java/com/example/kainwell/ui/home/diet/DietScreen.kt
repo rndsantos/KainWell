@@ -63,13 +63,14 @@ fun DietScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val state = uiState) {
         is DietUiState.Loading -> LoadingScreen()
-        is DietUiState.Success -> DietScreenReady(
+        is DietUiState.Ready -> DietScreenReady(
             savedDiets = state.savedDiets,
             modifier = modifier,
         )
 
         is DietUiState.Error -> ErrorScreen(
             errorMessage = state.errorMessage,
+            onBack = viewModel::onBack
         )
     }
 }

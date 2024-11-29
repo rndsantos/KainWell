@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -39,37 +40,48 @@ import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.add_diet.AddDietUiState
 import com.example.kainwell.ui.add_diet.AddDietViewModel
 import com.example.kainwell.ui.add_diet.SelectedFoodItemsCount
+import com.example.kainwell.ui.components.ErrorScreen
 import com.example.kainwell.ui.components.FoodImage
 import com.example.kainwell.ui.components.KainWellBottomAppBar
 import com.example.kainwell.ui.components.LoadingScreen
 import com.example.kainwell.ui.components.MacronutrientValue
+import kotlinx.coroutines.launch
 
 @Composable
 fun ViewMealScreen(
-    onNavigateToViewOptimizedDiet: () -> Unit,
+    navigateToViewOptimizedDiet: () -> Unit,
     onBack: () -> Unit,
     viewModel: AddDietViewModel = hiltViewModel(),
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val state = uiState) {
         is AddDietUiState.Ready -> ViewMealScreenReady(
             selectedFoodItems = state.selectedFoodItems,
-            onNavigateToViewOptimizedDiet = onNavigateToViewOptimizedDiet,
             onRemoveSelectedFoodItem = viewModel::onRemoveSelectedFoodItem,
-            onOptimizeMeal = viewModel::onOptimizeMeal,
+            onOptimizeMeal = {
+                coroutineScope.launch {
+                    viewModel.onOptimizeMeal().let { isOptimizedReady ->
+                        if (isOptimizedReady)
+                            navigateToViewOptimizedDiet()
+                    }
+                }
+            },
             onBack = onBack
         )
 
         is AddDietUiState.Loading -> LoadingScreen()
 
-        else -> throw IllegalStateException("UI state found is not preloaded yet.")
+        is AddDietUiState.Error -> ErrorScreen(
+            errorMessage = state.errorMessage,
+            onBack = viewModel::onErrorBack
+        )
     }
 }
 
 @Composable
 private fun ViewMealScreenReady(
     selectedFoodItems: List<Food>,
-    onNavigateToViewOptimizedDiet: () -> Unit,
     onRemoveSelectedFoodItem: (Food) -> Unit,
     onOptimizeMeal: () -> Unit,
     onBack: () -> Unit,
@@ -97,10 +109,10 @@ private fun ViewMealScreenReady(
             )
         },
         bottomBar = {
-            KainWellBottomAppBar(onClick = {
-                onOptimizeMeal()
-                onNavigateToViewOptimizedDiet()
-            }, contentPadding = PaddingValues(MediumPadding)) {
+            KainWellBottomAppBar(
+                onClick = onOptimizeMeal,
+                contentPadding = PaddingValues(MediumPadding)
+            ) {
                 Text(
                     text = "Optimize Diet",
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -113,7 +125,8 @@ private fun ViewMealScreenReady(
         ViewMealContent(
             selectedFoodItems = selectedFoodItems.toList(),
             onRemoveSelectedFoodItem = onRemoveSelectedFoodItem,
-            innerPadding = innerPadding
+            onBack = onBack,
+            innerPadding = innerPadding,
         )
     }
 }
@@ -150,6 +163,7 @@ private fun ViewMealScreenReady(
 private fun ViewMealContent(
     selectedFoodItems: List<Food>,
     onRemoveSelectedFoodItem: (Food) -> Unit,
+    onBack: () -> Unit,
     innerPadding: PaddingValues,
 ) {
     LazyColumn(
@@ -157,7 +171,12 @@ private fun ViewMealContent(
         modifier = Modifier.fillMaxSize()
     ) {
         items(selectedFoodItems) { food ->
-            FoodListItem(food = food, onRemoveSelectedFoodItem = onRemoveSelectedFoodItem)
+            FoodListItem(food = food, onRemoveSelectedFoodItem = {
+                if (selectedFoodItems.size == 1)
+                    onBack()
+
+                onRemoveSelectedFoodItem(food)
+            })
         }
     }
 }
@@ -165,7 +184,7 @@ private fun ViewMealContent(
 @Composable
 private fun FoodListItem(
     food: Food,
-    onRemoveSelectedFoodItem: (Food) -> Unit,
+    onRemoveSelectedFoodItem: () -> Unit,
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -241,9 +260,7 @@ private fun FoodListItem(
                 }
             }
 
-            IconButton(onClick = {
-                onRemoveSelectedFoodItem(food)
-            }) {
+            IconButton(onClick = onRemoveSelectedFoodItem) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
                     contentDescription = "close"

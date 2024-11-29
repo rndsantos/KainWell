@@ -39,6 +39,7 @@ import com.example.kainwell.ui.Dimensions.MediumPadding
 import com.example.kainwell.ui.Dimensions.SmallPadding
 import com.example.kainwell.ui.add_diet.AddDietUiState
 import com.example.kainwell.ui.add_diet.AddDietViewModel
+import com.example.kainwell.ui.components.ErrorScreen
 import com.example.kainwell.ui.components.FoodImage
 import com.example.kainwell.ui.components.KainWellBottomAppBar
 import com.example.kainwell.ui.components.LoadingScreen
@@ -56,12 +57,18 @@ fun ViewOptimizedDietScreen(
             optimizedDiet = state.optimizedDiet,
             onAddDiet = viewModel::onAddDiet,
             onNavigateToHome = onNavigateToHome,
-            onBack = onBack
+            onBack = {
+                viewModel.loadData()
+                onBack()
+            }
         )
 
         is AddDietUiState.Loading -> LoadingScreen()
 
-        else -> throw IllegalStateException("UI state found is not preloaded yet.")
+        is AddDietUiState.Error -> ErrorScreen(
+            errorMessage = state.errorMessage,
+            onBack = viewModel::onErrorBack
+        )
     }
 }
 
