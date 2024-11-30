@@ -380,8 +380,8 @@ fun NutritionalValuesGrid(food: Food) {
 
     val nutrients = listOf(
         Nutrient("Fiber", "${food.fiber} g"),
-        Nutrient("Sodium", "${food.sodium} mg"),
-        Nutrient("Vit A", "${food.vitA} IU"),
+        Nutrient("Sodium", "${food.sodium} mg", useWeight = false),
+        Nutrient("Vit A", "${food.vitA} IU", useWeight = false),
         Nutrient("Vit C", "${food.vitC} IU"),
         Nutrient("Calcium", "${food.calcium} mg"),
         Nutrient("Iron", "${food.iron} mg"),
@@ -403,7 +403,7 @@ fun NutritionalValuesGrid(food: Food) {
     FlowRow(
         maxItemsInEachRow = 4,
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = MediumPadding)
@@ -448,7 +448,7 @@ private fun NutrientCard(
         color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 1.dp,
         shape = MaterialTheme.shapes.extraLarge,
-        modifier = modifier
+        modifier = modifier.padding(horizontal = 4.dp)
     ) {
         if (badge != null) {
             badge()
@@ -468,7 +468,7 @@ private fun NutrientCard(
                 maxLines = 1,
             )
             Spacer(Modifier.height(MediumPadding))
-            Text(text = value, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            Text(text = value, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
 
     }

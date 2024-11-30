@@ -9,5 +9,9 @@ interface SavedDietsRepository {
 
     suspend fun addDiet(diet: DietEntity)
 
+    suspend fun updateDietTitle(diet: DietEntity, title: String)
+
     suspend fun clearSavedDiets()
+
+    suspend fun savedDietsCount(): Int
 }

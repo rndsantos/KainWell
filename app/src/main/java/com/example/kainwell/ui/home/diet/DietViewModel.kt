@@ -2,6 +2,7 @@ package com.example.kainwell.ui.home.diet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.kainwell.DietEntity
 import com.example.kainwell.DietsEntity
 import com.example.kainwell.data.diet.SavedDietsRepository
 import com.example.kainwell.data.food.Food
@@ -56,6 +57,20 @@ class DietViewModel @Inject constructor(
         }
     }
 
+    fun onEditDietTile(diet: Diet, newTitle: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            savedDietsRepository.updateDietTitle(diet.asDietEntity(), newTitle)
+        }
+    }
+
+    private fun Diet.asDietEntity(): DietEntity =
+        DietEntity
+            .newBuilder()
+            .setTitle(name)
+            .addAllNames(foodItems.map { it.name })
+            .addAllServings(foodItems.map { it.serving }).build()
+
+
     private fun DietsEntity.toDietList(foodItems: Map<String, Food>): List<Diet> {
         return dietsList.map { diet ->
             var totalCalories = 0f
@@ -92,6 +107,7 @@ class DietViewModel @Inject constructor(
             }
 
             Diet(
+                name = diet.title,
                 foodItems = foodItemsForDiet,
                 totalCalories = totalCalories.round(),
                 totalCholesterol = totalCholesterol.round(),

@@ -4,8 +4,9 @@ option java_package = "com.example.kainwell";
 option java_multiple_files = true;
 
 message DietEntity {
-    repeated string names = 1;
-    repeated float servings = 2;
+    string title = 1;
+    repeated string names = 2;
+    repeated float servings = 3;
 }
 
 message DietsEntity {

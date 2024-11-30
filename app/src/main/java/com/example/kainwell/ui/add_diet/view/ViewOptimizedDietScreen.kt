@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -125,12 +127,47 @@ private fun ViewOptimizedDietContent(
     optimizedDiet: List<Food>,
     innerPadding: PaddingValues,
 ) {
+    val isNonOptimal = optimizedDiet.any { food ->
+        food.serving > 10f
+    }
+
     LazyColumn(
         contentPadding = innerPadding,
-        modifier = Modifier.fillMaxSize()
+        verticalArrangement = Arrangement.spacedBy(MediumPadding),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(vertical = SmallPadding, horizontal = MediumPadding)
     ) {
+        if (isNonOptimal)
+            item {
+                NonOptimalNote()
+            }
+
         items(optimizedDiet) { food ->
             FoodListItem(food = food)
+        }
+    }
+}
+
+@Composable
+private fun NonOptimalNote() {
+    Surface(
+        color = MaterialTheme.colorScheme.tertiary,
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(SmallPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(SmallPadding)
+        ) {
+            Icon(imageVector = Icons.Filled.Info, contentDescription = null)
+            Text(
+                text = "This diet meets your daily intake, but may contain impractical servings.",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -142,7 +179,6 @@ private fun FoodListItem(
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.padding(vertical = SmallPadding, horizontal = MediumPadding)
     ) {
         Box {
             Row(

@@ -99,10 +99,12 @@ class AddDietViewModel @Inject constructor(
 
     fun onAddDiet() {
         viewModelScope.launch(Dispatchers.IO) {
+            val savedDietsCount = savedDietsRepository.savedDietsCount()
             savedDietsRepository.addDiet(
                 DietEntity.newBuilder()
                     .addAllNames(_optimizedDiet.value.map { it.name })
                     .addAllServings(_optimizedDiet.value.map { it.serving })
+                    .setTitle("Diet #${savedDietsCount + 1}")
                     .build()
             )
         }
@@ -114,7 +116,7 @@ class AddDietViewModel @Inject constructor(
 
             if (_optimizedDiet.value.isEmpty()) {
                 _uiState.value = AddDietUiState.Error(
-                    "No diet found for selected food items.\nConsider adding more food items to your diet."
+                    "The meal you've selected seems to be infeasible. Consider adding more food items to your meal."
                 )
                 false
             } else {

@@ -3,6 +3,7 @@ package com.example.kainwell.ui.home.diet
 import com.example.kainwell.data.food.Food
 
 data class Diet(
+    val name: String,
     val foodItems: List<Food>,
     val totalCalories: Float,
     val totalCholesterol: Float,

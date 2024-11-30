@@ -3,27 +3,31 @@ package com.example.kainwell.ui.home.diet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,9 +40,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.composables.core.SheetDetent.Companion.FullyExpanded
@@ -54,6 +60,7 @@ import com.example.kainwell.ui.components.FoodImage
 import com.example.kainwell.ui.components.LoadingScreen
 import com.example.kainwell.ui.components.MacronutrientValue
 import com.example.kainwell.ui.utils.isDarkMode
+import kotlin.math.min
 
 @Composable
 fun DietScreen(
@@ -65,6 +72,7 @@ fun DietScreen(
         is DietUiState.Loading -> LoadingScreen()
         is DietUiState.Ready -> DietScreenReady(
             savedDiets = state.savedDiets,
+            onEditTitle = viewModel::onEditDietTile,
             modifier = modifier,
         )
 
@@ -78,6 +86,7 @@ fun DietScreen(
 @Composable
 fun DietScreenReady(
     savedDiets: List<Diet>,
+    onEditTitle: (Diet, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(initialDetent = Hidden)
@@ -106,11 +115,16 @@ fun DietScreenReady(
                 verticalArrangement = Arrangement.spacedBy(MediumPadding),
                 contentPadding = PaddingValues(SmallPadding)
             ) {
-                itemsIndexed(savedDiets) { index, diet ->
-                    DietListItem(diet = diet, title = "Diet #${index + 1}", onFoodClick = { food ->
-                        selectedFood = food
-                        sheetState.currentDetent = FullyExpanded
-                    }, modifier = Modifier.fillMaxWidth())
+                items(savedDiets) { diet ->
+                    DietListItem(
+                        diet = diet,
+                        onFoodClick = { food ->
+                            selectedFood = food
+                            sheetState.currentDetent = FullyExpanded
+                        },
+                        onEditTitle = onEditTitle,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -129,12 +143,13 @@ fun DietScreenReady(
 }
 
 @Composable
-fun DietListItem(
+private fun DietListItem(
     diet: Diet,
-    title: String,
     onFoodClick: (Food) -> Unit,
+    onEditTitle: (Diet, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dialogState = remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(
         pageCount = {
             diet.foodItems.size
@@ -145,7 +160,7 @@ fun DietListItem(
         color = if (isDarkMode(LocalContext.current)) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.large,
         shadowElevation = if (isDarkMode(LocalContext.current)) 0.dp else 4.dp,
-        modifier = modifier
+        modifier = modifier.height(200.dp)
     ) {
         Box {
             Surface(
@@ -169,7 +184,16 @@ fun DietListItem(
                     modifier = Modifier
                         .padding(MediumPadding)
                 ) {
-                    Text(text = title, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = diet.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            dialogState.value = true
+                        }
+                    )
                     Row(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically,
@@ -219,7 +243,7 @@ fun DietListItem(
                             availableSpace: Int,
                             pageSpacing: Int,
                         ): Int {
-                            return (availableSpace - 2 * pageSpacing) / 3
+                            return (availableSpace - 2 * pageSpacing) / min(3, diet.foodItems.size)
                         }
                     }
 
@@ -243,7 +267,6 @@ fun DietListItem(
                                 imageUrl = foodItem.img,
                                 contentDescription = foodItem.name,
                                 modifier = Modifier
-                                    .aspectRatio(1f)
                                     .background(Color.Black)
                                     .alpha(0.5f)
                             )
@@ -265,6 +288,104 @@ fun DietListItem(
                                 )
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    if (dialogState.value)
+        EditDietTitleDialog(
+            diet = diet,
+            onDoneEditing = { newTitle ->
+                onEditTitle(diet, newTitle)
+                dialogState.value = false
+            }, onDismiss = {
+                dialogState.value = false
+            }
+        )
+}
+
+@Composable
+private fun EditDietTitleDialog(
+    diet: Diet,
+    onDoneEditing: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var dietTitle by remember {
+        mutableStateOf(diet.name)
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.padding(MediumPadding)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(SmallPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(MediumPadding)
+            ) {
+                TextField(
+                    value = dietTitle,
+                    onValueChange = {
+                        dietTitle = it
+                    },
+                    label = {
+                        Text(
+                            text = "Change diet name",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Text
+                    ),
+                    singleLine = true,
+                    maxLines = 1,
+                    colors = TextFieldDefaults.colors().copy(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+
+                        unfocusedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        focusedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+
+                        cursorColor = MaterialTheme.colorScheme.onPrimaryContainer,
+
+                        errorContainerColor = MaterialTheme.colorScheme.errorContainer,
+                        errorCursorColor = MaterialTheme.colorScheme.onErrorContainer,
+                        errorIndicatorColor = MaterialTheme.colorScheme.onErrorContainer,
+
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        disabledIndicatorColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    modifier = Modifier.padding(SmallPadding)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            text = "Cancel",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    TextButton(onClick = {
+                        onDoneEditing(dietTitle)
+                    }) {
+                        Text(
+                            text = "Done",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
