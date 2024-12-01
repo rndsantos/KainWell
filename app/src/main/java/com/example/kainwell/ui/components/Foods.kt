@@ -375,7 +375,7 @@ fun FoodDetailBottomSheet(
 }
 
 @Composable
-fun NutritionalValuesGrid(food: Food) {
+private fun NutritionalValuesGrid(food: Food) {
     data class Nutrient(val name: String, val value: String, val useWeight: Boolean = true)
 
     val nutrients = listOf(

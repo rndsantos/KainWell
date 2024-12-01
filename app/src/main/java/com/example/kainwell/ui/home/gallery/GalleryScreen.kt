@@ -40,7 +40,7 @@ fun GalleryScreen(
 }
 
 @Composable
-fun GalleryScreenReady(
+private fun GalleryScreenReady(
     foodItems: List<Food>,
 ) {
     val sheetState = rememberModalBottomSheetState(initialDetent = Hidden)

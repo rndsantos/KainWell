@@ -103,7 +103,7 @@ fun KainWellBottomBar(
 }
 
 @Composable
-fun BottomNavItem(
+private fun BottomNavItem(
     selected: Boolean,
     icon: ImageVector,
     label: String,

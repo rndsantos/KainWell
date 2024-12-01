@@ -7,5 +7,4 @@ object Dimensions {
     val MediumPadding = 16.dp
     val LargePadding = 24.dp
     val ExtraLargePadding = 32.dp
-    val FabIconSize = 60.dp
 }

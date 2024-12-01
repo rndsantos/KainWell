@@ -1,6 +1,5 @@
 @file:OptIn(
-    ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,
-    ExperimentalLayoutApi::class
+    ExperimentalMaterial3Api::class
 )
 
 package com.example.kainwell.ui.add_diet
@@ -12,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -404,7 +402,7 @@ private fun Modifier.bottomBorder(strokeWidth: Dp, color: Color, space: Dp) = co
 )
 
 @Composable
-fun SearchBar(
+private fun SearchBar(
     query: TextFieldValue,
     onQueryChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier,

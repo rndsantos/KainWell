@@ -131,34 +131,6 @@ private fun ViewMealScreenReady(
     }
 }
 
-//@Composable
-//private fun ViewMealBottomAppBar(
-//    onOptimizeMeal: () -> Unit,
-//) {
-//    Surface(
-//        shadowElevation = 5.dp,
-//    ) {
-//        KainWellButton(
-//            onClick = onOptimizeMeal,
-//            containerColor = MaterialTheme.colorScheme.inverseSurface,
-//            shape = MaterialTheme.shapes.large.copy(
-//                topStart = MaterialTheme.shapes.large.bottomStart,
-//                topEnd = MaterialTheme.shapes.large.bottomEnd
-//            ),
-//            modifier = Modifier.fillMaxWidth()
-//        ) {
-//            Text(
-//                text = "Optimize Diet",
-//                style = MaterialTheme.typography.bodyMedium.copy(
-//                    fontWeight = FontWeight.Bold
-//                ),
-//                modifier = Modifier
-//                    .navigationBarsPadding()
-//            )
-//        }
-//    }
-//}
-
 @Composable
 private fun ViewMealContent(
     selectedFoodItems: List<Food>,
@@ -269,57 +241,3 @@ private fun FoodListItem(
         }
     }
 }
-
-//@Composable
-//fun FoodItemCounter(
-//    quantity: Int,
-//    onAdd: () -> Unit,
-//    onRemove: () -> Unit,
-//    modifier: Modifier = Modifier,
-//) {
-//    Box(modifier) {
-//        Row(
-//            verticalAlignment = Alignment.CenterVertically,
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            modifier = Modifier.padding(vertical = 4.dp)
-//        ) {
-//            Box(
-//                modifier = Modifier
-//                    .padding(horizontal = SmallPadding)
-//                    .clickable {
-//                        onRemove()
-//                    }
-//            ) {
-//                if (quantity == 1)
-//                    Icon(imageVector = Icons.Outlined.Delete, contentDescription = "close")
-//                else
-//                    Icon(
-//                        painter = painterResource(R.drawable.ic_remove),
-//                        contentDescription = "close"
-//                    )
-//            }
-//            Text(
-//                text = quantity.toString(),
-//                style = MaterialTheme.typography.titleSmall.copy(
-//                    fontWeight = FontWeight.Bold
-//                ),
-//                modifier = Modifier.padding(horizontal = 10.dp)
-//            )
-//            Box(
-//                modifier = Modifier
-//                    .padding(horizontal = SmallPadding)
-//                    .clickable(
-//                        enabled = quantity < 10
-//                    ) {
-//                        onAdd()
-//                    }
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Outlined.Add,
-//                    contentDescription = "add",
-//                    tint = if (quantity == 10) MaterialTheme.colorScheme.surfaceDim else Color.Unspecified
-//                )
-//            }
-//        }
-//    }
-//}
