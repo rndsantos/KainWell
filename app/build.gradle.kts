@@ -101,8 +101,6 @@ kapt {
 
 protobuf {
     protoc {
-        // find latest version number here:
-        // https://mvnrepository.com/artifact/com.google.protobuf/protoc
         artifact = "com.google.protobuf:protoc:3.25.1"
     }
     generateProtoTasks {
