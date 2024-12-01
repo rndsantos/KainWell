@@ -1,4 +1,4 @@
-package com.example.kainwell.ui.home.welcome
+package com.example.kainwell.ui.welcome
 
 sealed interface WelcomeUiState {
     data object Ready : WelcomeUiState

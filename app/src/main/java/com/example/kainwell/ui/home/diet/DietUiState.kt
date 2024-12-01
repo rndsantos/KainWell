@@ -7,5 +7,7 @@ sealed interface DietUiState {
         val errorMessage: String,
         val errorType: Throwable? = null,
     ) : DietUiState
+
+    data object NoSavedNutritionalIntake : DietUiState
 }
 

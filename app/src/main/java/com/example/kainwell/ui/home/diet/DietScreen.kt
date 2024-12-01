@@ -64,6 +64,7 @@ import kotlin.math.min
 
 @Composable
 fun DietScreen(
+    navigateToWelcome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DietViewModel = hiltViewModel(),
 ) {
@@ -80,6 +81,8 @@ fun DietScreen(
             errorMessage = state.errorMessage,
             onBack = viewModel::onBack
         )
+
+        is DietUiState.NoSavedNutritionalIntake -> navigateToWelcome()
     }
 }
 
@@ -295,7 +298,7 @@ private fun DietListItem(
     }
 
     if (dialogState.value)
-        EditDietTitleDialog(
+        EditDietNameDialog(
             diet = diet,
             onDoneEditing = { newTitle ->
                 onEditTitle(diet, newTitle)
@@ -307,18 +310,18 @@ private fun DietListItem(
 }
 
 @Composable
-private fun EditDietTitleDialog(
+private fun EditDietNameDialog(
     diet: Diet,
     onDoneEditing: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var dietTitle by remember {
+    var dietName by remember {
         mutableStateOf(diet.name)
     }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = MaterialTheme.colorScheme.surface,
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier.padding(MediumPadding)
         ) {
@@ -328,9 +331,9 @@ private fun EditDietTitleDialog(
                 modifier = Modifier.padding(MediumPadding)
             ) {
                 TextField(
-                    value = dietTitle,
+                    value = dietName,
                     onValueChange = {
-                        dietTitle = it
+                        dietName = it
                     },
                     label = {
                         Text(
@@ -378,7 +381,7 @@ private fun EditDietTitleDialog(
                         )
                     }
                     TextButton(onClick = {
-                        onDoneEditing(dietTitle)
+                        onDoneEditing(dietName)
                     }) {
                         Text(
                             text = "Done",

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.example.kainwell.ui.home.welcome
+package com.example.kainwell.ui.welcome
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -249,23 +249,3 @@ private fun NutrientInput(
         }
     }
 }
-
-//@Composable
-//private fun NutrientCard(
-//    name: String,
-//    modifier: Modifier = Modifier,
-//) {
-//    Surface(
-//        modifier = modifier,
-//        shape = MaterialTheme.shapes.medium,
-//    ) {
-//        Box(contentAlignment = Alignment.Center) {
-//            Text(
-//                text = name,
-//                style = MaterialTheme.typography.titleSmall.copy(
-//                    fontWeight = FontWeight.Black
-//                )
-//            )
-//        }
-//    }
-//}

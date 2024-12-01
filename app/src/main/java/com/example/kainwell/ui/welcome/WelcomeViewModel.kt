@@ -1,4 +1,4 @@
-package com.example.kainwell.ui.home.welcome
+package com.example.kainwell.ui.welcome
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,13 +17,6 @@ class WelcomeViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<WelcomeUiState>(WelcomeUiState.Ready)
     val uiState = _uiState.asStateFlow()
-
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (!nutritionalIntakesRepository.isEmpty())
-                _uiState.value = WelcomeUiState.Finished
-        }
-    }
 
     fun setNutritionalIntakes(minimumNutrient: NutrientEntity, maximumNutrient: NutrientEntity) {
         viewModelScope.launch(Dispatchers.IO) {

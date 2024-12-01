@@ -21,12 +21,12 @@ fun rememberKainWellNavController(
 class KainWellNavController(
     val navController: NavHostController,
 ) {
-    fun <T : Any> getBackStackEntry(route: T): NavBackStackEntry {
+    fun getBackStackEntry(route: Route): NavBackStackEntry {
         return navController.getBackStackEntry(route)
     }
 
-    fun <T : Any> navigateToBottomBarRoute(route: T) {
-        if (route != navController.currentDestination) {
+    fun navigateToBottomBarRoute(route: Route) {
+        if (route.toString() != navController.currentDestination?.route) {
             navController.navigate(route) {
                 launchSingleTop = true
                 restoreState = true
@@ -37,12 +37,24 @@ class KainWellNavController(
         }
     }
 
-    fun <T : Any> navigate(route: T, from: NavBackStackEntry) {
+    fun navigate(route: Route, from: NavBackStackEntry) {
         if (from.lifecycleIsResumed()) {
             navController.navigate(route)
         }
     }
+
+    fun navigateAndPopUp(route: Route, popUp: Route, from: NavBackStackEntry) {
+        if (from.lifecycleIsResumed()) {
+            navController.navigate(route) {
+                popUpTo(popUp) {
+                    inclusive = true
+                }
+            }
+        }
+    }
 }
+
+typealias Route = Any
 
 private fun NavBackStackEntry.lifecycleIsResumed() =
     this.lifecycle.currentState == Lifecycle.State.RESUMED

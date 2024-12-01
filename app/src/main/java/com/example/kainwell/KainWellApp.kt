@@ -1,16 +1,10 @@
-@file:OptIn(ExperimentalSharedTransitionApi::class)
-
 package com.example.kainwell
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -22,8 +16,6 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,9 +32,9 @@ import com.example.kainwell.ui.add_diet.view.ViewOptimizedDietScreen
 import com.example.kainwell.ui.home.Diet
 import com.example.kainwell.ui.home.KainWellBottomBar
 import com.example.kainwell.ui.home.addHomeGraph
-import com.example.kainwell.ui.home.welcome.WelcomeScreen
 import com.example.kainwell.ui.navigation.rememberKainWellNavController
 import com.example.kainwell.ui.theme.KainWellTheme
+import com.example.kainwell.ui.welcome.WelcomeScreen
 import kotlinx.serialization.Serializable
 
 
@@ -70,111 +62,114 @@ fun KainWellApp() {
     KainWellTheme {
         val kainWellNavController = rememberKainWellNavController()
 
-        SharedTransitionLayout {
-            CompositionLocalProvider(
-                LocalSharedTransitionScope provides this
-            ) {
-                NavHost(
-                    navController = kainWellNavController.navController,
-                    startDestination = Welcome
-                ) {
-                    composable<Welcome> { backStackEntry ->
-                        WelcomeScreen(
-                            navigateToDietScreen = {
-                                kainWellNavController.navigate(
-                                    route = Home,
-                                    from = backStackEntry
-                                )
-                            },
+
+        NavHost(
+            navController = kainWellNavController.navController,
+            startDestination = Home
+        ) {
+            composableWithTransition<Welcome> { backStackEntry ->
+                WelcomeScreen(
+                    navigateToDietScreen = {
+                        kainWellNavController.navigateAndPopUp(
+                            route = Home,
+                            popUp = Welcome,
+                            from = backStackEntry
                         )
-                    }
+                    },
+                )
+            }
 
-                    composableWithCompositionLocal<Home> { backStackEntry ->
-                        MainContainer(
-                            navigateToAddDiet = {
-                                kainWellNavController.navigate(
-                                    route = AddDiet,
-                                    from = backStackEntry
-                                )
-                            }
+            composableWithTransition<Home> { backStackEntry ->
+                MainContainer(
+                    navigateToWelcome = {
+                        kainWellNavController.navigateAndPopUp(
+                            route = Welcome,
+                            popUp = Home,
+                            from = backStackEntry
                         )
+                    },
+                    navigateToAddDiet = {
+                        kainWellNavController.navigate(
+                            route = AddDiet,
+                            from = backStackEntry
+                        )
+                    },
+                )
+            }
+
+            navigation<AddDiet>(startDestination = PickFoodItems) {
+                composableWithTransition<PickFoodItems> { backStackEntry ->
+                    AddDietScreen(
+                        onBack = { kainWellNavController.navController.popBackStack() },
+                        navigateToViewMeal = {
+                            kainWellNavController.navigate(
+                                route = ViewMeal,
+                                from = backStackEntry
+                            )
+                        }
+                    )
+                }
+
+                composableWithTransition<ViewMeal>(
+                    enterTransition = {
+                        slideInVertically { it / 3 }
+                    },
+                    exitTransition = {
+                        slideOutHorizontally { -it / 3 }
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally { -it / 3 }
+                    },
+                    popExitTransition = {
+                        slideOutVertically { it / 3 }
                     }
-
-                    navigation<AddDiet>(startDestination = PickFoodItems) {
-                        composableWithCompositionLocal<PickFoodItems> { backStackEntry ->
-                            AddDietScreen(
-                                onBack = { kainWellNavController.navController.popBackStack() },
-                                navigateToViewMeal = {
-                                    kainWellNavController.navigate(
-                                        route = ViewMeal,
-                                        from = backStackEntry
-                                    )
-                                }
+                ) { backStackEntry ->
+                    val viewModel =
+                        hiltViewModel<AddDietViewModel>(
+                            kainWellNavController.getBackStackEntry(
+                                PickFoodItems
                             )
-                        }
-
-                        composable<ViewMeal>(
-                            enterTransition = {
-                                slideInVertically { it / 3 }
-                            },
-                            exitTransition = {
-                                slideOutHorizontally { -it / 3 }
-                            },
-                            popEnterTransition = {
-                                slideInHorizontally { -it / 3 }
-                            },
-                            popExitTransition = {
-                                slideOutVertically { it / 3 }
-                            }
-                        ) { backStackEntry ->
-                            val viewModel =
-                                hiltViewModel<AddDietViewModel>(
-                                    kainWellNavController.getBackStackEntry(
-                                        PickFoodItems
-                                    )
-                                )
-                            ViewMealScreen(
-                                navigateToViewOptimizedDiet = {
-                                    kainWellNavController.navigate(
-                                        route = ViewOptimizedDiet,
-                                        from = backStackEntry
-                                    )
-                                },
-                                onBack = {
-                                    kainWellNavController.navController.popBackStack()
-                                },
-                                viewModel = viewModel
+                        )
+                    ViewMealScreen(
+                        navigateToViewOptimizedDiet = {
+                            kainWellNavController.navigate(
+                                route = ViewOptimizedDiet,
+                                from = backStackEntry
                             )
-                        }
+                        },
+                        onBack = {
+                            kainWellNavController.navController.popBackStack()
+                        },
+                        viewModel = viewModel
+                    )
+                }
 
-                        composable<ViewOptimizedDiet>(
-                            enterTransition = {
-                                slideInHorizontally { it / 3 }
-                            },
-                            popExitTransition = {
-                                slideOutHorizontally { it / 3 }
-                            }
-                        ) { backStackEntry ->
-                            val viewModel =
-                                hiltViewModel<AddDietViewModel>(
-                                    kainWellNavController.getBackStackEntry(
-                                        PickFoodItems
-                                    )
-                                )
-                            ViewOptimizedDietScreen(
-                                onNavigateToHome = {
-                                    kainWellNavController.navigate(
-                                        route = Home,
-                                        from = backStackEntry
-                                    )
-                                },
-                                onBack = {
-                                    kainWellNavController.navController.popBackStack()
-                                },
-                                viewModel = viewModel
-                            )
-                        }
+                composableWithTransition<ViewOptimizedDiet>(
+                    enterTransition = {
+                        slideInHorizontally { it / 3 }
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally { it / 3 }
                     }
+                ) { backStackEntry ->
+                    val viewModel =
+                        hiltViewModel<AddDietViewModel>(
+                            kainWellNavController.getBackStackEntry(
+                                PickFoodItems
+                            )
+                        )
+                    ViewOptimizedDietScreen(
+                        onNavigateToHome = {
+                            kainWellNavController.navigate(
+                                route = Home,
+                                from = backStackEntry
+                            )
+                        },
+                        onBack = {
+                            kainWellNavController.navController.popBackStack()
+                        },
+                        viewModel = viewModel
+                    )
                 }
             }
         }
@@ -183,16 +178,18 @@ fun KainWellApp() {
 
 @Composable
 fun MainContainer(
-    navigateToAddDiet: (NavBackStackEntry) -> Unit,
+    navigateToWelcome: () -> Unit,
+    navigateToAddDiet: () -> Unit,
 ) {
     val nestedNavController = rememberKainWellNavController()
     val navBackStackEntry by nestedNavController.navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     Scaffold(
         bottomBar = {
             KainWellBottomBar(
-                navigateToAddDiet = {
-                    navigateToAddDiet(navBackStackEntry!!)
-                },
+                currentRoute = currentRoute ?: Diet.toString(),
+                navigateToAddDiet = navigateToAddDiet,
                 navigateToRoute = nestedNavController::navigateToBottomBarRoute
             )
         }
@@ -202,6 +199,7 @@ fun MainContainer(
             startDestination = Diet
         ) {
             addHomeGraph(
+                navigateToWelcome = navigateToWelcome,
                 modifier = Modifier
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding)
@@ -210,7 +208,7 @@ fun MainContainer(
     }
 }
 
-inline fun <reified T : Any> NavGraphBuilder.composableWithCompositionLocal(
+inline fun <reified T : Any> NavGraphBuilder.composableWithTransition(
     noinline enterTransition: (
     @JvmSuppressWildcards
     AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?
@@ -241,11 +239,7 @@ inline fun <reified T : Any> NavGraphBuilder.composableWithCompositionLocal(
         popEnterTransition = popEnterTransition,
         popExitTransition = popExitTransition,
     ) {
-        CompositionLocalProvider(
-            LocalNavAnimatedVisibilityScope provides this@composable
-        ) {
-            content(it)
-        }
+        content(it)
     }
 }
 
@@ -254,7 +248,5 @@ fun <T> nonSpatialExpressiveSpring() = spring<T>(
     stiffness = 1600f
 )
 
-val LocalNavAnimatedVisibilityScope = compositionLocalOf<AnimatedVisibilityScope?> { null }
-val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
 
 

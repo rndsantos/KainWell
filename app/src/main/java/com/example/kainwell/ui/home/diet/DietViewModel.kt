@@ -7,6 +7,7 @@ import com.example.kainwell.DietsEntity
 import com.example.kainwell.data.diet.SavedDietsRepository
 import com.example.kainwell.data.food.Food
 import com.example.kainwell.data.food.FoodRepository
+import com.example.kainwell.data.nutrient.NutritionalIntakesRepository
 import com.example.kainwell.domain.round
 import com.example.kainwell.domain.updateData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DietViewModel @Inject constructor(
     private val foodRepository: FoodRepository,
+    private val nutritionalIntakesRepository: NutritionalIntakesRepository,
     private val savedDietsRepository: SavedDietsRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<DietUiState>(DietUiState.Loading)
@@ -30,6 +32,9 @@ class DietViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            if (nutritionalIntakesRepository.isEmpty())
+                _uiState.value = DietUiState.NoSavedNutritionalIntake
+
             combine(
                 foodRepository.getAllFoodItems(),
                 savedDietsRepository.savedDietsFlow(),
